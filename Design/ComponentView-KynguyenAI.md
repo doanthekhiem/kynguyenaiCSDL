@@ -1,21 +1,21 @@
-# COMPONENT VIEW - KYNGUYENAI.VN
+# COMPONENT VIEW - KYNGUYENAI.VN (NEWS AGGREGATOR)
 
 # TỔNG QUAN KIẾN TRÚC HỆ THỐNG
 
 ## 1. Kiến trúc Tổng quan
 
-kynguyenAI.vn được thiết kế theo mô hình **Frontend-First Architecture** với **Serverless Backend**, tận dụng tối đa sức mạnh của Next.js 15 App Router và các AI APIs bên thứ ba.
+KynguyenAI.vn được thiết kế theo mô hình **News Aggregator Architecture** với **AI-Powered Content Pipeline**, tận dụng tối đa sức mạnh của Next.js 15 App Router, Bento Grid UI và các AI APIs để tự động tuyển chọn, dịch và trình bày tin tức công nghệ.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                           KYNGUYENAI.VN - SYSTEM ARCHITECTURE                        │
+│                    KYNGUYENAI.VN - NEWS AGGREGATOR ARCHITECTURE                      │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                       │
 │  ┌─────────────────────────────────────────────────────────────────────────────────┐ │
 │  │                              CLIENT LAYER                                        │ │
 │  │  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐                │ │
 │  │  │   Web Browser   │   │  Mobile Browser │   │   Social Share  │                │ │
-│  │  │   (Desktop)     │   │   (Responsive)  │   │   (OG Preview)  │                │ │
+│  │  │   (Desktop)     │   │   (PWA Ready)   │   │   (OG Preview)  │                │ │
 │  │  └────────┬────────┘   └────────┬────────┘   └────────┬────────┘                │ │
 │  │           │                     │                     │                          │ │
 │  │           └─────────────────────┴─────────────────────┘                          │ │
@@ -27,32 +27,34 @@ kynguyenAI.vn được thiết kế theo mô hình **Frontend-First Architecture
 │  │                         FRONTEND APPLICATION LAYER                               │ │
 │  │                              (Next.js 15 App Router)                             │ │
 │  │  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐                │ │
-│  │  │  Journey Pages  │   │  Chatbot UI     │   │  Admin Panel    │                │ │
-│  │  │  (Scrollytelling│   │  (Future Self)  │   │  (Prompt Mgmt)  │                │ │
+│  │  │  Homepage       │   │  Category Pages │   │  Article Detail │                │ │
+│  │  │  (Bento Grid)   │   │  (Frontend/AI)  │   │  (Vietnamese)   │                │ │
 │  │  └────────┬────────┘   └────────┬────────┘   └────────┬────────┘                │ │
 │  │           │                     │                     │                          │ │
 │  │  ┌────────┴─────────────────────┴─────────────────────┴────────┐                │ │
-│  │  │              REACT COMPONENTS + STATE (Zustand)              │                │ │
+│  │  │         REACT COMPONENTS (Bento Grid + Dark Mode)            │                │ │
+│  │  │         • NewsTile (1x1, 1x2, 2x1, 2x2)                      │                │ │
+│  │  │         • DebateTile (AI Debate Widget)                      │                │ │
+│  │  │         • GitHubTrendingTile                                 │                │ │
+│  │  │         • AffiliateTile, SponsoredTile                       │                │ │
 │  │  └──────────────────────────────┬───────────────────────────────┘                │ │
 │  │                                 │                                                 │ │
 │  │  ┌──────────────────────────────┴───────────────────────────────┐                │ │
-│  │  │           ANIMATION LAYER (GSAP + React Three Fiber)         │                │ │
+│  │  │           STATE MANAGEMENT (Zustand + SWR)                   │                │ │
 │  │  └──────────────────────────────────────────────────────────────┘                │ │
 │  └─────────────────────────────────┼─────────────────────────────────────────────────┘ │
 │                                    │                                                   │
 │                                    ▼                                                   │
 │  ┌─────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                              BFF LAYER                                           │ │
+│  │                              API LAYER                                           │ │
 │  │                       (Next.js API Routes + Edge Functions)                      │ │
 │  │  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐                │ │
-│  │  │ /api/journey/*  │   │ /api/ai/*       │   │ /api/chat/*     │                │ │
-│  │  │ Journey APIs    │   │ AI Orchestrator │   │ Chatbot APIs    │                │ │
+│  │  │ /api/news/*     │   │ /api/ai/*       │   │ /api/github/*   │                │ │
+│  │  │ News fetching   │   │ AI Translation  │   │ Trending repos  │                │ │
 │  │  └────────┬────────┘   └────────┬────────┘   └────────┬────────┘                │ │
 │  │           │                     │                     │                          │ │
 │  │  ┌────────┴─────────────────────┴─────────────────────┴────────┐                │ │
-│  │  │              Vercel AI SDK (Core + UI)                       │                │ │
-│  │  │              - streamText(), streamObject()                  │                │ │
-│  │  │              - useChat(), useCompletion()                    │                │ │
+│  │  │              Vercel AI SDK (for streaming translation)       │                │ │
 │  │  └──────────────────────────────┬───────────────────────────────┘                │ │
 │  └─────────────────────────────────┼─────────────────────────────────────────────────┘ │
 │                                    │                                                   │
@@ -60,12 +62,12 @@ kynguyenAI.vn được thiết kế theo mô hình **Frontend-First Architecture
 │         │                          │                          │                       │
 │         ▼                          ▼                          ▼                       │
 │  ┌─────────────────┐   ┌─────────────────────┐   ┌─────────────────┐                 │
-│  │  AI PROVIDERS   │   │    DATA LAYER       │   │  STORAGE LAYER  │                 │
+│  │  NEWS SOURCES   │   │    DATA LAYER       │   │  AI PROVIDERS   │                 │
 │  │  ─────────────  │   │    ───────────      │   │  ─────────────  │                 │
-│  │  • OpenAI       │   │  Supabase           │   │  Supabase       │                 │
-│  │  • Anthropic    │   │  • PostgreSQL       │   │  Storage        │                 │
-│  │  • Replicate    │   │  • pgvector (RAG)   │   │  • Images       │                 │
-│  │  • Fal.ai       │   │  • Auth             │   │  • Postcards    │                 │
+│  │  • NewsData.io  │   │  Supabase           │   │  • Gemini       │                 │
+│  │  • GitHub API   │   │  • PostgreSQL       │   │    Flash 1.5    │                 │
+│  │  • Manual Feed  │   │  • Full-text        │   │  • OpenAI       │                 │
+│  │                 │   │    Search           │   │    (fallback)   │                 │
 │  └─────────────────┘   └─────────────────────┘   └─────────────────┘                 │
 │                                                                                       │
 └─────────────────────────────────────────────────────────────────────────────────────┘
@@ -79,59 +81,63 @@ kynguyenAI.vn được thiết kế theo mô hình **Frontend-First Architecture
 
 | Component | Technology | Mô tả |
 |-----------|-----------|-------|
-| **Web Browser (Desktop)** | Modern browsers | Chrome, Firefox, Safari, Edge - hỗ trợ WebGL, CSS animations |
-| **Mobile Browser** | Responsive design | iOS Safari, Chrome Android - touch-optimized scrollytelling |
-| **Social Share Preview** | Open Graph meta | Facebook, Twitter, LinkedIn preview cards với generated images |
+| **Web Browser (Desktop)** | Modern browsers | Chrome, Firefox, Safari, Edge - Bento Grid layout |
+| **Mobile Browser (PWA)** | Responsive + PWA | iOS Safari, Chrome Android - Single column layout |
+| **Social Share Preview** | Open Graph meta | Facebook, Twitter, LinkedIn preview cards |
 
 ### 2.2 Frontend Application Layer
 
 | Component | Technology | Mô tả |
 |-----------|-----------|-------|
-| **kynguyenai-web** | Next.js 15 (App Router) | Main application với React Server Components |
-| **Journey Pages** | React + GSAP | Scrollytelling experience với timeline-based animations |
-| **Chatbot UI** | React + Vercel AI SDK UI | Real-time streaming chat interface |
-| **Admin Panel** | React + Shadcn/ui | Quản lý prompts, knowledge base, analytics |
-| **State Management** | Zustand | Global state cho journey progress, user choices |
-| **Animation Layer** | GSAP ScrollTrigger | Parallax effects, timeline synchronization |
-| **3D Visualization** | React Three Fiber | Optional 3D globe/map trên landing page |
+| **kynguyenai-web** | Next.js 15 (App Router) | Main application với ISR (Incremental Static Regeneration) |
+| **Homepage** | React + Bento Grid | Trang chủ với dynamic Bento Grid layout |
+| **Category Pages** | React + Filtering | Frontend, Backend, AI, API, DevOps categories |
+| **Article Detail** | React + Markdown | Bài viết chi tiết với bản dịch tiếng Việt |
+| **AI Debate Widget** | React + Streaming | Real-time AI debate display |
+| **State Management** | Zustand | Global state cho filters, user preferences |
+| **Data Fetching** | SWR | Client-side data fetching với caching |
 
-### 2.3 BFF Layer (Backend for Frontend)
+### 2.3 API Layer (Backend for Frontend)
 
 | API Route | Chức năng | Technology |
 |-----------|-----------|------------|
-| **/api/journey/start** | Khởi tạo journey session | Edge Function |
-| **/api/journey/milestone** | Lấy narrative cho từng cột mốc năm | Edge Function + Streaming |
-| **/api/ai/generate-narrative** | Generate text với LLM | Vercel AI SDK + OpenAI/Anthropic |
-| **/api/ai/generate-postcard** | Generate image với Flux/DALL-E | Edge Function + Replicate/Fal.ai |
-| **/api/chat/message** | Streaming chat response | Vercel AI SDK + RAG |
-| **/api/subscription/check** | Kiểm tra quota và tier | Edge Function + Supabase |
+| **/api/news/fetch** | Lấy tin tức từ NewsData.io | Edge Function |
+| **/api/news/translate** | Dịch bài viết sang tiếng Việt | Edge Function + Gemini |
+| **/api/ai/debate** | Generate AI debate | Streaming API + Gemini |
+| **/api/github/trending** | Lấy GitHub trending repos | Edge Function |
+| **/api/search** | Full-text search tiếng Việt | Edge Function + PostgreSQL |
+| **/api/newsletter/subscribe** | Đăng ký newsletter | Edge Function + Resend |
 
-### 2.4 AI Provider Layer
+### 2.4 News Sources Layer
+
+| Provider | Data Source | Refresh Rate | Cost |
+|----------|------------|--------------|------|
+| **NewsData.io** | Global tech news (Hacker News, TechCrunch, etc.) | Mỗi 1 giờ | $99/tháng |
+| **GitHub API** | Trending repositories (TypeScript, JavaScript, Python, etc.) | Mỗi 6 giờ | Miễn phí |
+| **Manual Feed** | Editor-curated important news | On-demand | Miễn phí |
+
+### 2.5 AI Provider Layer
 
 | Provider | Model | Use Case | Cost |
 |----------|-------|----------|------|
-| **OpenAI** | GPT-4o | Logic/data tasks, Vietnamese text | ~$2.5/1M input tokens |
-| **Anthropic** | Claude 3.5 Sonnet | Storytelling, creative writing | ~$3/1M input tokens |
-| **Replicate** | Flux.1 Pro | High-quality image generation | ~$0.05/image |
-| **Fal.ai** | Flux.1 Pro | Alternative image provider | ~$0.04/image |
-| **Groq/DeepInfra** | SDXL Turbo | Fast low-quality images (free tier) | ~$0.001/image |
+| **Google Gemini** | Flash 1.5 | Vietnamese translation | ~$50/tháng (1M articles × $0.002) |
+| **OpenAI** | GPT-4o mini | Fallback translation | $0.15/1M input tokens |
 
-### 2.5 Data Layer
+### 2.6 Data Layer
 
 | Component | Technology | Mô tả |
 |-----------|-----------|-------|
-| **Supabase PostgreSQL** | PostgreSQL 15 | Primary database cho users, journeys, subscriptions |
-| **pgvector Extension** | pgvector | Vector embeddings cho RAG chatbot |
-| **Supabase Auth** | Built-in Auth | Authentication với social providers |
+| **Supabase PostgreSQL** | PostgreSQL 15 | Primary database cho articles, users, subscriptions |
+| **Full-text Search** | PostgreSQL tsvector | Tìm kiếm tiếng Việt |
+| **Supabase Auth** | Built-in Auth | Authentication cho premium users |
 | **Row Level Security** | PostgreSQL RLS | Data isolation per user |
 
-### 2.6 Storage Layer
+### 2.7 Storage Layer
 
 | Bucket | Content Type | Access |
 |--------|-------------|--------|
-| **postcards** | Generated AI images | Public (with watermark) |
-| **user-uploads** | Face photos (Cultural Evolution module) | Private per user |
-| **assets** | Static assets, pre-rendered backgrounds | Public CDN |
+| **article-images** | Thumbnail images từ news sources | Public CDN |
+| **og-images** | Open Graph images cho social share | Public CDN |
 
 ---
 
@@ -141,52 +147,38 @@ kynguyenAI.vn được thiết kế theo mô hình **Frontend-First Architecture
 
 ```
 app/
-├── (marketing)/
-│   ├── page.tsx                    # Landing page với 3D globe
-│   └── layout.tsx                  # Marketing layout
+├── (main)/
+│   ├── page.tsx                    # Homepage với Bento Grid
+│   ├── [category]/
+│   │   └── page.tsx               # Category pages (frontend, ai, api, etc.)
+│   ├── article/
+│   │   └── [slug]/
+│   │       └── page.tsx           # Article detail page
+│   └── layout.tsx                 # Main layout với header/footer
 │
-├── (journey)/
-│   ├── journey/
-│   │   ├── page.tsx               # Journey configuration
-│   │   └── [sessionId]/
-│   │       ├── page.tsx           # Main scrollytelling experience
-│   │       └── postcard/
-│   │           └── page.tsx       # Final postcard reveal
-│   └── layout.tsx                 # Journey layout (no header/footer)
-│
-├── (modules)/
-│   ├── city-dreamer/
-│   │   └── page.tsx               # City Dreamer module
-│   ├── cultural-evolution/
-│   │   └── page.tsx               # Cultural Evolution module
-│   └── future-workforce/
-│       └── page.tsx               # Future Workforce module
-│
-├── (chat)/
-│   └── chat/
-│       └── [sessionId]/
-│           └── page.tsx           # Chatbot interface
-│
-├── (admin)/
-│   └── admin/
-│       ├── prompts/
-│       │   └── page.tsx           # Prompt management
-│       ├── knowledge/
-│       │   └── page.tsx           # Knowledge base management
-│       └── analytics/
-│           └── page.tsx           # Dashboard
+├── (features)/
+│   ├── debate/
+│   │   └── [debateId]/
+│   │       └── page.tsx           # AI Debate detail page
+│   ├── search/
+│   │   └── page.tsx               # Search results page
+│   └── newsletter/
+│       └── page.tsx               # Newsletter subscription
 │
 ├── api/
-│   ├── journey/
-│   │   ├── start/route.ts
-│   │   └── milestone/route.ts
+│   ├── news/
+│   │   ├── fetch/route.ts
+│   │   ├── translate/route.ts
+│   │   └── [id]/route.ts
 │   ├── ai/
-│   │   ├── generate-narrative/route.ts
-│   │   └── generate-postcard/route.ts
-│   ├── chat/
-│   │   └── message/route.ts
-│   └── subscription/
-│       └── check/route.ts
+│   │   ├── debate/route.ts
+│   │   └── translate/route.ts
+│   ├── github/
+│   │   └── trending/route.ts
+│   ├── search/
+│   │   └── route.ts
+│   └── newsletter/
+│       └── subscribe/route.ts
 │
 └── layout.tsx                      # Root layout
 ```
@@ -202,43 +194,55 @@ app/
 │  ├── <Providers>                                                 │
 │  │   ├── <ZustandProvider>      # State management               │
 │  │   ├── <SupabaseProvider>     # Auth context                   │
-│  │   └── <ThemeProvider>        # Dark/light mode                │
+│  │   └── <ThemeProvider>        # Dark mode (default)            │
 │  │                                                               │
-│  ├── <LandingPage>                                               │
-│  │   ├── <GlobeVisualization>   # React Three Fiber              │
-│  │   ├── <HeroSection>          # CTA + intro text               │
-│  │   └── <LocationPicker>       # Can Gio, Thu Duc, Hanoi        │
+│  ├── <HomePage>                                                  │
+│  │   ├── <Header>               # Navigation + search            │
+│  │   ├── <BentoGrid>            # Main content grid              │
+│  │   │   ├── <HeroTile>         # 2x2 breaking news              │
+│  │   │   ├── <NewsTile>         # 1x1 regular news               │
+│  │   │   ├── <FeaturedTile>     # 1x2 featured article           │
+│  │   │   ├── <DebateTile>       # 2x2 AI debate                  │
+│  │   │   ├── <GitHubTile>       # 2x1 trending repos             │
+│  │   │   ├── <AffiliateTile>    # 1x1 affiliate product          │
+│  │   │   └── <SponsoredTile>    # Sponsored content              │
+│  │   ├── <CategoryFilter>       # Filter by Frontend/AI/etc.     │
+│  │   └── <Footer>               # Links + newsletter CTA         │
 │  │                                                               │
-│  ├── <JourneyPage>                                               │
-│  │   ├── <JourneyConfig>        # User input form                │
-│  │   │   ├── <LocationSelect>                                    │
-│  │   │   ├── <ProfessionSelect>                                  │
-│  │   │   └── <LifestyleSelect>                                   │
-│  │   │                                                           │
-│  │   ├── <ScrollytellingContainer>                               │
-│  │   │   ├── <TimelineIndicator> # Year display (2026-2045)      │
-│  │   │   ├── <ParallaxSection>   # GSAP ScrollTrigger sections   │
-│  │   │   │   ├── <BackgroundLayer>                               │
-│  │   │   │   ├── <ContentLayer>                                  │
-│  │   │   │   └── <ForegroundLayer>                               │
-│  │   │   └── <NarrativeText>     # AI-generated streaming text   │
-│  │   │                                                           │
-│  │   └── <PostcardReveal>                                        │
-│  │       ├── <LoadingAnimation>  # While image generates         │
-│  │       ├── <PostcardDisplay>   # Final image                   │
-│  │       └── <ShareButtons>      # Social share CTAs             │
+│  ├── <CategoryPage>                                              │
+│  │   ├── <Header>                                                │
+│  │   ├── <CategoryHero>         # Category description           │
+│  │   ├── <ArticleList>          # Filtered articles              │
+│  │   │   ├── <ArticleCard>      # Article preview card           │
+│  │   │   └── <LoadMore>         # Pagination                     │
+│  │   └── <Footer>                                                │
 │  │                                                               │
-│  ├── <ChatPage>                                                  │
-│  │   ├── <ChatHeader>           # "Bản thể Tương lai"            │
-│  │   ├── <MessageList>          # Chat history                   │
-│  │   │   ├── <UserMessage>                                       │
-│  │   │   └── <AIMessage>        # Streaming response             │
-│  │   └── <ChatInput>            # Message input                  │
+│  ├── <ArticleDetailPage>                                         │
+│  │   ├── <Header>                                                │
+│  │   ├── <ArticleHeader>        # Title, date, source            │
+│  │   ├── <ArticleContent>       # Vietnamese translation         │
+│  │   │   ├── <MarkdownRenderer> # Render markdown content        │
+│  │   │   └── <CodeBlock>        # Syntax highlighted code        │
+│  │   ├── <OriginalLink>         # Link to original article       │
+│  │   ├── <ShareButtons>         # Social share                   │
+│  │   ├── <RelatedArticles>      # Similar articles               │
+│  │   └── <Footer>                                                │
 │  │                                                               │
-│  └── <ModulePages>                                               │
-│      ├── <CityDreamer>                                           │
-│      ├── <CulturalEvolution>                                     │
-│      └── <FutureWorkforce>                                       │
+│  ├── <DebatePage>                                                │
+│  │   ├── <Header>                                                │
+│  │   ├── <DebateHeader>         # Debate topic                   │
+│  │   ├── <DebateContent>        # Two-column AI arguments        │
+│  │   │   ├── <ArgumentColumn>   # Left: AI Agent 1               │
+│  │   │   └── <ArgumentColumn>   # Right: AI Agent 2              │
+│  │   ├── <VoteWidget>           # User voting                    │
+│  │   └── <Footer>                                                │
+│  │                                                               │
+│  └── <SearchPage>                                                │
+│      ├── <Header>                                                │
+│      ├── <SearchBar>            # Search input                   │
+│      ├── <SearchResults>        # Results list                   │
+│      │   └── <ArticleCard>      # Article preview                │
+│      └── <Footer>                                                │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -246,246 +250,181 @@ app/
 ### 3.3 State Management (Zustand Stores)
 
 ```typescript
-// stores/journeyStore.ts
-interface JourneyState {
-  // Session
-  sessionId: string | null;
+// stores/newsStore.ts
+interface NewsState {
+  // Filters
+  selectedCategory: 'all' | 'frontend' | 'backend' | 'api' | 'ai' | 'devops';
+  dateRange: 'today' | 'week' | 'month';
 
-  // User Choices
-  location: 'can-gio' | 'thu-duc' | 'hanoi' | null;
-  profession: string | null;
-  lifestyle: 'peaceful' | 'vibrant' | 'connected' | null;
-
-  // Progress
-  currentYear: number;  // 2026 - 2045
-  scrollProgress: number;  // 0 - 100
-
-  // Generated Content
-  milestones: Map<number, MilestoneContent>;
-  postcard: GeneratedPostcard | null;
+  // Articles
+  articles: Article[];
+  featuredArticle: Article | null;
 
   // Actions
-  startJourney: () => Promise<void>;
-  updateProgress: (year: number, scroll: number) => void;
-  generateMilestone: (year: number) => Promise<void>;
-  generatePostcard: () => Promise<void>;
-}
-
-// stores/chatStore.ts
-interface ChatState {
-  sessionId: string | null;
-  messages: ChatMessage[];
-  isStreaming: boolean;
-
-  sendMessage: (content: string) => Promise<void>;
-  clearHistory: () => void;
+  setCategory: (category: string) => void;
+  fetchArticles: () => Promise<void>;
+  searchArticles: (query: string) => Promise<Article[]>;
 }
 
 // stores/userStore.ts
 interface UserState {
   user: User | null;
-  subscription: SubscriptionTier;
-  dailyUsage: UsageQuota;
+  subscription: 'free' | 'premium';
+  preferences: {
+    theme: 'dark' | 'light';
+    language: 'vi' | 'en';
+    notifications: boolean;
+  };
 
-  checkQuota: () => Promise<boolean>;
-  incrementUsage: () => void;
+  updatePreferences: (prefs: Partial<Preferences>) => void;
+}
+
+// stores/debateStore.ts
+interface DebateState {
+  currentDebate: Debate | null;
+  pastDebates: Debate[];
+  userVotes: Map<string, 'agent1' | 'agent2'>;
+
+  loadDebate: (debateId: string) => Promise<void>;
+  vote: (debateId: string, choice: 'agent1' | 'agent2') => void;
 }
 ```
 
 ---
 
-## 4. ANIMATION & VISUALIZATION LAYER
+## 4. BENTO GRID LAYOUT SYSTEM
 
-### 4.1 GSAP ScrollTrigger Configuration
+### 4.1 Grid Configuration
 
 ```typescript
-// Scrollytelling Timeline Structure
-const journeyTimeline = {
-  sections: [
-    {
-      year: 2026,
-      scrollStart: 0,
-      scrollEnd: 10,
-      background: 'present-day',
-      filter: 'desaturated',
-      content: 'introduction'
-    },
-    {
-      year: 2030,
-      scrollStart: 10,
-      scrollEnd: 30,
-      background: 'early-future',
-      filter: 'blueprint',
-      content: 'milestone-2030'
-    },
-    {
-      year: 2035,
-      scrollStart: 30,
-      scrollEnd: 50,
-      background: 'mid-future',
-      filter: 'wireframe',
-      content: 'milestone-2035'
-    },
-    {
-      year: 2040,
-      scrollStart: 50,
-      scrollEnd: 70,
-      background: 'near-future',
-      filter: 'colorizing',
-      content: 'milestone-2040'
-    },
-    {
-      year: 2045,
-      scrollStart: 70,
-      scrollEnd: 100,
-      background: 'solarpunk',
-      filter: 'full-color',
-      content: 'finale'
-    }
-  ]
+// Bento Grid Layout Structure
+const bentoGridLayout = {
+  desktop: {
+    columns: 4,
+    rows: 'auto',
+    gap: '16px',
+    tiles: [
+      { type: 'hero', size: '2x2', position: [0, 0] },      // Breaking news
+      { type: 'featured', size: '1x2', position: [2, 0] },  // Featured article
+      { type: 'news', size: '1x1', position: [3, 0] },      // Regular news
+      { type: 'news', size: '1x1', position: [3, 1] },
+      { type: 'debate', size: '2x2', position: [0, 2] },    // AI debate
+      { type: 'github', size: '2x1', position: [2, 2] },    // GitHub trending
+      { type: 'affiliate', size: '1x1', position: [2, 3] }, // Affiliate
+      { type: 'sponsored', size: '1x1', position: [3, 3] }, // Sponsored
+      // ... more tiles
+    ]
+  },
+  mobile: {
+    columns: 1,
+    rows: 'auto',
+    gap: '12px',
+    // All tiles collapse to 1x1 or 1x2
+  }
 };
 ```
 
-### 4.2 React Three Fiber Globe (Optional)
+### 4.2 Tile Types
 
-```typescript
-// components/GlobeVisualization.tsx
-interface GlobeProps {
-  locations: Location[];
-  onLocationSelect: (location: Location) => void;
-  cameraPosition: [number, number, number];
-}
-
-// Locations to highlight
-const vietnamLocations = [
-  { id: 'can-gio', name: 'Cần Giờ', lat: 10.4113, lng: 106.9564, color: '#00ff88' },
-  { id: 'thu-duc', name: 'Thủ Đức', lat: 10.8517, lng: 106.7533, color: '#ff6b00' },
-  { id: 'hanoi', name: 'Hà Nội', lat: 21.0285, lng: 105.8542, color: '#ffcc00' }
-];
-```
+| Tile Type | Size | Content | Refresh Rate |
+|-----------|------|---------|--------------|
+| **HeroTile** | 2x2 | Breaking news với large image | Real-time |
+| **FeaturedTile** | 1x2 | Featured article với excerpt | Mỗi giờ |
+| **NewsTile** | 1x1 | Regular news với thumbnail | Mỗi giờ |
+| **DebateTile** | 2x2 | AI debate với streaming | Mỗi ngày |
+| **GitHubTile** | 2x1 | Trending repos list | Mỗi 6 giờ |
+| **AffiliateTile** | 1x1 | Affiliate product | Static |
+| **SponsoredTile** | 1x1 | Sponsored content | Static |
 
 ---
 
 ## 5. API LAYER DETAIL
 
-### 5.1 Journey APIs
+### 5.1 News Pipeline Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      JOURNEY API FLOW                            │
+│                      NEWS PROCESSING PIPELINE                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│   POST /api/journey/start                                        │
-│   ─────────────────────                                          │
-│   Request: { location, profession, lifestyle }                   │
-│   Response: { sessionId, estimatedDuration }                     │
-│                                                                   │
-│                          │                                        │
-│                          ▼                                        │
-│                                                                   │
-│   GET /api/journey/milestone?sessionId=xxx&year=2030             │
-│   ──────────────────────────────────────────────                 │
-│   Response: SSE Stream of narrative text                         │
-│   Headers: Content-Type: text/event-stream                       │
-│                                                                   │
-│                          │                                        │
-│                          ▼                                        │
-│                                                                   │
-│   POST /api/ai/generate-postcard                                 │
-│   ──────────────────────────────                                 │
-│   Request: { sessionId, resolution: '1080' | '4k' }              │
-│   Response: { imageUrl, thumbnailUrl, shareUrl }                 │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 5.2 AI Orchestration Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   AI ORCHESTRATION FLOW                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│   User Request                                                   │
+│   External News Source (NewsData.io)                             │
 │        │                                                          │
 │        ▼                                                          │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              PROMPT BUILDER                              │   │
+│   │              STEP 1: FETCH & FILTER                      │   │
 │   │  ─────────────────────────────────────────────────────  │   │
-│   │  1. Load base template from Knowledge Base               │   │
-│   │  2. Inject location-specific data (Can Gio, Thu Duc...)  │   │
-│   │  3. Add user context (profession, lifestyle)             │   │
-│   │  4. Apply Solarpunk aesthetic guidelines                 │   │
+│   │  • Fetch từ NewsData.io API                             │   │
+│   │  • Filter: keywords (React, Next.js, AI, API, etc.)     │   │
+│   │  • Filter: domains (dev.to, hackernews, techcrunch)     │   │
+│   │  • Deduplicate: remove duplicates                       │   │
 │   └────────────────────────┬────────────────────────────────┘   │
 │                            │                                      │
 │                            ▼                                      │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              MODEL ROUTER                                │   │
+│   │              STEP 2: AI TRANSLATION                      │   │
 │   │  ─────────────────────────────────────────────────────  │   │
-│   │  Text Generation:                                        │   │
-│   │    - Claude 3.5 Sonnet (creative/storytelling)          │   │
-│   │    - GPT-4o (data/logic tasks)                          │   │
-│   │                                                          │   │
-│   │  Image Generation:                                       │   │
-│   │    - Flux Pro (high quality, paid)                       │   │
-│   │    - SDXL Turbo (fast preview, free tier)               │   │
+│   │  • Send to Gemini Flash 1.5                             │   │
+│   │  • Prompt: Translate to Vietnamese, keep tech terms     │   │
+│   │  • Output: Vietnamese summary + title                   │   │
+│   │  • Store original + translation                         │   │
 │   └────────────────────────┬────────────────────────────────┘   │
 │                            │                                      │
 │                            ▼                                      │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              RESPONSE PROCESSOR                          │   │
+│   │              STEP 3: CATEGORIZATION                      │   │
 │   │  ─────────────────────────────────────────────────────  │   │
-│   │  1. Stream text to frontend (useChat/useCompletion)      │   │
-│   │  2. Cache completed responses (Redis/in-memory)          │   │
-│   │  3. Apply watermark to images                            │   │
-│   │  4. Store in Supabase Storage                            │   │
+│   │  • Auto-categorize: Frontend, Backend, AI, API, DevOps  │   │
+│   │  • Extract tags: React, TypeScript, Next.js, etc.       │   │
+│   │  • Calculate relevance score                            │   │
+│   └────────────────────────┬────────────────────────────────┘   │
+│                            │                                      │
+│                            ▼                                      │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │              STEP 4: STORAGE & INDEX                     │   │
+│   │  ─────────────────────────────────────────────────────  │   │
+│   │  • Save to PostgreSQL (articles table)                  │   │
+│   │  • Create full-text search index (tsvector)             │   │
+│   │  • Generate OG image                                    │   │
+│   │  • Trigger ISR revalidation                             │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 RAG Architecture for Chatbot
+### 5.2 AI Debate Generation Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    RAG CHATBOT FLOW                              │
+│                    AI DEBATE GENERATION FLOW                     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│   User Question: "Chất lượng không khí năm 2045 thế nào?"       │
+│   Daily Cron Job (9:00 AM Vietnam time)                         │
 │        │                                                          │
 │        ▼                                                          │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              EMBEDDING GENERATION                        │   │
-│   │  OpenAI text-embedding-3-small                          │   │
-│   └────────────────────────┬────────────────────────────────┘   │
-│                            │                                      │
-│                            ▼                                      │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │              VECTOR SEARCH (pgvector)                    │   │
+│   │              SELECT DEBATE TOPIC                         │   │
 │   │  ─────────────────────────────────────────────────────  │   │
-│   │  SELECT * FROM knowledge_embeddings                      │   │
-│   │  ORDER BY embedding <-> $query_embedding                 │   │
-│   │  LIMIT 5;                                                │   │
-│   │                                                          │   │
-│   │  Retrieved Context:                                      │   │
-│   │  - Quy hoạch môi trường Thủ Đức 2045                    │   │
-│   │  - Chỉ tiêu Net Zero của Việt Nam                       │   │
-│   │  - Dự báo chất lượng không khí                          │   │
+│   │  • Predefined topics: "React vs Vue", "TypeScript vs JS" │   │
+│   │  • Or: Trending topic from recent articles              │   │
 │   └────────────────────────┬────────────────────────────────┘   │
 │                            │                                      │
 │                            ▼                                      │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              AUGMENTED PROMPT                            │   │
+│   │              GENERATE ARGUMENTS                          │   │
 │   │  ─────────────────────────────────────────────────────  │   │
-│   │  System: "Bạn là Bản thể Tương lai của user..."         │   │
-│   │  Context: [Retrieved documents]                          │   │
-│   │  User: "Chất lượng không khí năm 2045 thế nào?"         │   │
+│   │  • AI Agent 1: Pro argument (3 rounds)                  │   │
+│   │  • AI Agent 2: Con argument (3 rounds)                  │   │
+│   │  • Each round: 200-300 words in Vietnamese              │   │
+│   │  • Use Gemini Flash 1.5 for cost efficiency             │   │
 │   └────────────────────────┬────────────────────────────────┘   │
 │                            │                                      │
 │                            ▼                                      │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              LLM RESPONSE (Streaming)                    │   │
-│   │  Claude 3.5 Sonnet generates in-character response      │   │
+│   │              STORE & PUBLISH                             │   │
+│   │  ─────────────────────────────────────────────────────  │   │
+│   │  • Save to debates table                                 │   │
+│   │  • Update homepage Bento Grid                            │   │
+│   │  • Enable user voting                                    │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
@@ -497,130 +436,112 @@ const vietnamLocations = [
 
 ### 6.1 Database Schema Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DATABASE SCHEMA                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│   ┌─────────────────┐      ┌─────────────────┐                  │
-│   │     users       │      │  subscriptions  │                  │
-│   │  ─────────────  │      │  ─────────────  │                  │
-│   │  id (PK)        │◄────►│  user_id (FK)   │                  │
-│   │  email          │      │  tier           │                  │
-│   │  created_at     │      │  expires_at     │                  │
-│   └────────┬────────┘      └─────────────────┘                  │
-│            │                                                      │
-│            │ 1:N                                                  │
-│            ▼                                                      │
-│   ┌─────────────────┐      ┌─────────────────┐                  │
-│   │ journey_sessions│      │  daily_usage    │                  │
-│   │  ─────────────  │      │  ─────────────  │                  │
-│   │  id (PK)        │      │  user_id (FK)   │                  │
-│   │  user_id (FK)   │      │  date           │                  │
-│   │  location       │      │  generations    │                  │
-│   │  profession     │      │  images         │                  │
-│   │  lifestyle      │      └─────────────────┘                  │
-│   │  current_year   │                                            │
-│   │  completed      │                                            │
-│   └────────┬────────┘                                            │
-│            │                                                      │
-│            │ 1:N                                                  │
-│            ▼                                                      │
-│   ┌─────────────────┐      ┌─────────────────┐                  │
-│   │   milestones    │      │   postcards     │                  │
-│   │  ─────────────  │      │  ─────────────  │                  │
-│   │  session_id(FK) │      │  session_id(FK) │                  │
-│   │  year           │      │  image_url      │                  │
-│   │  narrative      │      │  thumbnail_url  │                  │
-│   │  generated_at   │      │  prompt_used    │                  │
-│   └─────────────────┘      │  shared_count   │                  │
-│                            └─────────────────┘                  │
-│                                                                   │
-│   ┌─────────────────┐      ┌─────────────────┐                  │
-│   │ chat_sessions   │      │ chat_messages   │                  │
-│   │  ─────────────  │      │  ─────────────  │                  │
-│   │  id (PK)        │◄────►│  session_id(FK) │                  │
-│   │  journey_id(FK) │      │  role           │                  │
-│   │  created_at     │      │  content        │                  │
-│   └─────────────────┘      │  created_at     │                  │
-│                            └─────────────────┘                  │
-│                                                                   │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │              KNOWLEDGE BASE TABLES                       │   │
-│   │  ─────────────────────────────────────────────────────  │   │
-│   │  locations: id, name, description, planning_data        │   │
-│   │  milestones_template: location_id, year, template       │   │
-│   │  knowledge_embeddings: id, content, embedding (vector)  │   │
-│   │  prompt_templates: id, type, template, variables        │   │
-│   └─────────────────────────────────────────────────────────┘   │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 6.2 Key Tables DDL
-
 ```sql
--- Journey Sessions
-CREATE TABLE journey_sessions (
+-- Articles Table
+CREATE TABLE articles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  location VARCHAR(50) NOT NULL,
-  profession VARCHAR(100) NOT NULL,
-  lifestyle VARCHAR(50) NOT NULL,
-  current_year INTEGER DEFAULT 2026,
-  scroll_progress INTEGER DEFAULT 0,
-  completed BOOLEAN DEFAULT FALSE,
+  title VARCHAR(500) NOT NULL,
+  title_vi VARCHAR(500) NOT NULL,
+  summary TEXT NOT NULL,
+  summary_vi TEXT NOT NULL,
+  content TEXT,
+  content_vi TEXT,
+  source_url TEXT NOT NULL,
+  source_name VARCHAR(100),
+  category VARCHAR(50) NOT NULL, -- frontend, backend, ai, api, devops
+  tags TEXT[], -- [react, typescript, nextjs]
+  image_url TEXT,
+  published_at TIMESTAMPTZ NOT NULL,
+  relevance_score INTEGER DEFAULT 0,
+  views INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Full-text search
+  search_vector tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('vietnamese', coalesce(title_vi, '')), 'A') ||
+    setweight(to_tsvector('vietnamese', coalesce(summary_vi, '')), 'B')
+  ) STORED
 );
 
--- Knowledge Embeddings for RAG
-CREATE TABLE knowledge_embeddings (
+CREATE INDEX articles_search_idx ON articles USING GIN (search_vector);
+CREATE INDEX articles_category_idx ON articles (category);
+CREATE INDEX articles_published_idx ON articles (published_at DESC);
+
+-- Debates Table
+CREATE TABLE debates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  content TEXT NOT NULL,
-  embedding vector(1536),  -- OpenAI embedding dimension
-  metadata JSONB,
-  location VARCHAR(50),
-  category VARCHAR(50),
+  topic VARCHAR(500) NOT NULL,
+  description TEXT,
+  agent1_name VARCHAR(100),
+  agent2_name VARCHAR(100),
+  agent1_arguments JSONB, -- [{round: 1, text: "..."}]
+  agent2_arguments JSONB,
+  votes_agent1 INTEGER DEFAULT 0,
+  votes_agent2 INTEGER DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'active', -- active, archived
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for vector similarity search
-CREATE INDEX ON knowledge_embeddings
-  USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+-- GitHub Trending Table
+CREATE TABLE github_trending (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  repo_name VARCHAR(200) NOT NULL,
+  repo_url TEXT NOT NULL,
+  description TEXT,
+  description_vi TEXT,
+  language VARCHAR(50),
+  stars INTEGER,
+  stars_today INTEGER,
+  fetched_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Users & Subscriptions
+CREATE TABLE users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email VARCHAR(255) NOT NULL,
+  subscription_tier VARCHAR(20) DEFAULT 'free', -- free, premium
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE newsletter_subscribers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  unsubscribed_at TIMESTAMPTZ
+);
+
+-- User Preferences
+CREATE TABLE user_preferences (
+  user_id UUID PRIMARY KEY REFERENCES users(id),
+  theme VARCHAR(20) DEFAULT 'dark',
+  preferred_categories TEXT[],
+  email_frequency VARCHAR(20) DEFAULT 'weekly' -- daily, weekly, monthly
+);
 ```
 
 ---
 
 ## 7. EXTERNAL INTEGRATIONS
 
-### 7.1 AI Provider Integration Matrix
+### 7.1 Integration Matrix
 
-| Provider | API | Auth Method | Rate Limit | Fallback |
-|----------|-----|-------------|------------|----------|
-| **OpenAI** | REST + Streaming | API Key (env) | 10,000 RPM | Anthropic |
-| **Anthropic** | REST + Streaming | API Key (env) | 4,000 RPM | OpenAI |
-| **Replicate** | REST + Webhooks | API Token | 600/hour | Fal.ai |
-| **Fal.ai** | REST | API Key | 1000/hour | Replicate |
-| **Groq** | REST + Streaming | API Key | 30 RPM | DeepInfra |
+| Service | API | Auth Method | Rate Limit | Cost |
+|---------|-----|-------------|------------|------|
+| **NewsData.io** | REST | API Key | 200 requests/hour | $99/month |
+| **GitHub API** | REST | Token | 5000 requests/hour | Free |
+| **Gemini Flash 1.5** | REST + Streaming | API Key | No strict limit | $0.002/1K tokens |
+| **Resend** | REST | API Key | 3000 emails/month | $20/month |
 
-### 7.2 Payment Integration (Future)
+### 7.2 Cron Jobs Schedule
 
-| Provider | Use Case | Integration Type |
-|----------|----------|-----------------|
-| **MoMo** | Vietnam mobile payment | REST API + Webhooks |
-| **ZaloPay** | Vietnam mobile payment | REST API + Webhooks |
-| **Stripe** | International cards | Stripe SDK |
-
-### 7.3 Social Share Integration
-
-| Platform | Feature | Implementation |
-|----------|---------|----------------|
-| **Facebook** | Share postcard | Open Graph meta tags + Share Dialog |
-| **Twitter/X** | Share postcard | Twitter Cards meta + Web Intent |
-| **TikTok** | Share video (future) | TikTok Share Kit |
-| **LinkedIn** | Share journey summary | LinkedIn Share API |
+| Job | Frequency | Function | Runtime |
+|-----|-----------|----------|---------|
+| **fetch-news** | Mỗi 1 giờ | Fetch news từ NewsData.io | Edge Function |
+| **translate-articles** | Mỗi 1 giờ | Translate new articles | Edge Function |
+| **github-trending** | Mỗi 6 giờ | Fetch GitHub trending | Edge Function |
+| **generate-debate** | Mỗi ngày 9:00 AM | Generate daily AI debate | Serverless Function |
+| **send-newsletter** | Thứ 2 8:00 AM | Send weekly newsletter | Serverless Function |
 
 ---
 
@@ -638,12 +559,13 @@ CREATE INDEX ON knowledge_embeddings
 │   │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   │   │
 │   │  │   Edge      │   │  Serverless │   │   Static    │   │   │
 │   │  │  Functions  │   │  Functions  │   │   Assets    │   │   │
-│   │  │  (Global)   │   │  (Regional) │   │   (CDN)     │   │   │
+│   │  │  (Global)   │   │  (Regional) │   │   (ISR)     │   │   │
 │   │  └─────────────┘   └─────────────┘   └─────────────┘   │   │
 │   │        │                 │                 │             │   │
 │   │        └─────────────────┴─────────────────┘             │   │
 │   │                          │                               │   │
 │   │                    Vercel Edge Network                   │   │
+│   │              (Global CDN with ISR caching)               │   │
 │   │                                                          │   │
 │   └──────────────────────────┬──────────────────────────────┘   │
 │                              │                                    │
@@ -651,112 +573,71 @@ CREATE INDEX ON knowledge_embeddings
 │         │                    │                    │              │
 │         ▼                    ▼                    ▼              │
 │   ┌───────────┐       ┌───────────┐       ┌───────────┐         │
-│   │ Supabase  │       │ AI APIs   │       │ Analytics │         │
-│   │ (AWS)     │       │ (Various) │       │ (Vercel)  │         │
+│   │ Supabase  │       │ News APIs │       │ Analytics │         │
 │   │           │       │           │       │           │         │
-│   │ •PostgreSQL       │ •OpenAI   │       │ •Web      │         │
-│   │ •pgvector │       │ •Anthropic│       │  Analytics│         │
-│   │ •Storage  │       │ •Replicate│       │ •Speed    │         │
-│   │ •Auth     │       │ •Fal.ai   │       │  Insights │         │
+│   │ •PostgreSQL       │ •NewsData │       │ •Vercel   │         │
+│   │ •Auth     │       │  .io      │       │  Analytics│         │
+│   │ •Storage  │       │ •GitHub   │       │ •Sentry   │         │
 │   └───────────┘       └───────────┘       └───────────┘         │
 │                                                                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.1 Environment Configuration
+### 8.1 ISR Strategy
 
-| Environment | Domain | Supabase Project | AI Keys |
-|-------------|--------|------------------|---------|
-| **Development** | localhost:3000 | kynguyenai-dev | Test keys |
-| **Staging** | staging.kynguyenai.vn | kynguyenai-staging | Test keys |
-| **Production** | kynguyenai.vn | kynguyenai-prod | Production keys |
-
-### 8.2 CI/CD Pipeline
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      CI/CD PIPELINE                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│   GitHub Push                                                    │
-│        │                                                          │
-│        ▼                                                          │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │   GitHub Actions                                         │   │
-│   │   ───────────────                                        │   │
-│   │   1. Install dependencies (pnpm)                         │   │
-│   │   2. Run TypeScript check                                │   │
-│   │   3. Run ESLint                                          │   │
-│   │   4. Run unit tests (Vitest)                             │   │
-│   │   5. Build Next.js                                       │   │
-│   └────────────────────────┬────────────────────────────────┘   │
-│                            │                                      │
-│                            ▼                                      │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │   Vercel Deployment                                      │   │
-│   │   ─────────────────                                      │   │
-│   │   • Preview deployment (PR branches)                     │   │
-│   │   • Production deployment (main branch)                  │   │
-│   │   • Environment variables from Vercel dashboard          │   │
-│   └─────────────────────────────────────────────────────────┘   │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Page Type | Revalidation Time | Reason |
+|-----------|------------------|--------|
+| **Homepage** | 300s (5 phút) | Fresh content mà vẫn fast |
+| **Category Pages** | 600s (10 phút) | Balanced freshness |
+| **Article Detail** | 3600s (1 giờ) | Static content, rarely changes |
+| **Debate Page** | on-demand | Generated daily, no auto-revalidate |
 
 ---
 
-## 9. SECURITY CONSIDERATIONS
+## 9. PERFORMANCE OPTIMIZATION
 
-### 9.1 API Key Protection
+### 9.1 Frontend Optimizations
+
+| Technique | Implementation | Impact |
+|-----------|---------------|--------|
+| **ISR** | Next.js ISR với revalidation | Fast load times |
+| **Image Optimization** | next/image + Vercel Image Optimization | 60% faster images |
+| **Font Optimization** | next/font với subsets | No layout shift |
+| **Code Splitting** | Next.js App Router auto-splitting | Smaller bundles |
+| **Prefetching** | Prefetch category pages | Instant navigation |
+
+### 9.2 Backend Optimizations
+
+| Technique | Implementation | Impact |
+|-----------|---------------|--------|
+| **Edge Caching** | Vercel Edge Network | <100ms global latency |
+| **Database Indexing** | PostgreSQL indexes on category, date | Fast queries |
+| **Connection Pooling** | Supabase built-in pooling | Handle burst traffic |
+| **Rate Limiting** | Upstash Redis | Prevent abuse |
+
+---
+
+## 10. SECURITY CONSIDERATIONS
+
+### 10.1 API Key Protection
 
 | Key Type | Storage | Access |
 |----------|---------|--------|
-| AI Provider Keys | Vercel Environment Variables | Server-side only (API Routes) |
+| NewsData.io API Key | Vercel Environment Variables | Server-side only |
+| GitHub Token | Vercel Environment Variables | Server-side only |
+| Gemini API Key | Vercel Environment Variables | Server-side only |
 | Supabase Anon Key | Public (client-side) | RLS protected |
-| Supabase Service Key | Vercel Environment Variables | Server-side only |
 
-### 9.2 Rate Limiting Strategy
+### 10.2 Rate Limiting
 
 | Endpoint | Free Tier | Premium Tier |
 |----------|-----------|--------------|
-| /api/journey/start | 3/day | Unlimited |
-| /api/ai/generate-narrative | 10/day | Unlimited |
-| /api/ai/generate-postcard | 3/day | 20/day |
-| /api/chat/message | 50/day | 500/day |
-
-### 9.3 Content Moderation
-
-| Content Type | Moderation | Action |
-|--------------|------------|--------|
-| User uploads (face photos) | AWS Rekognition | Block inappropriate content |
-| AI-generated images | Provider built-in filters | Flag for review |
-| Chat messages | Keyword filter + AI moderation | Warn user |
-
----
-
-## 10. PERFORMANCE OPTIMIZATION
-
-### 10.1 Frontend Optimizations
-
-| Technique | Implementation | Impact |
-|-----------|---------------|--------|
-| **Code Splitting** | Next.js App Router auto-splitting | Reduce initial bundle |
-| **Image Optimization** | next/image + Vercel Image Optimization | Faster image loading |
-| **Font Optimization** | next/font with subsets | No layout shift |
-| **Prefetching** | Link prefetch for journey sections | Instant navigation |
-
-### 10.2 API Optimizations
-
-| Technique | Implementation | Impact |
-|-----------|---------------|--------|
-| **Streaming** | Vercel AI SDK streaming | Perceived performance |
-| **Caching** | SWR + Edge caching | Reduce API calls |
-| **Queue System** | Image generation queue | Handle burst traffic |
-| **CDN** | Supabase Storage + Vercel Edge | Fast asset delivery |
+| /api/search | 30 requests/hour | Unlimited |
+| /api/newsletter/subscribe | 5 requests/day | N/A |
+| Homepage | No limit | No limit |
 
 ---
 
 **Tài liệu liên quan:**
-- [BusinessContextVision-KynguyenAI.md](./BusinessContextVision-KynguyenAI.md) - Tầm nhìn kinh doanh
+- [BusinessContextVision-KynguyenAI-v2.md](./BusinessContextVision-KynguyenAI-v2.md) - Tầm nhìn kinh doanh
 - [Tech-Stack-KynguyenAI.md](./Tech-Stack-KynguyenAI.md) - Chi tiết công nghệ
-- [HLD-TM-JOURNEY.md](../HLD/KynguyenAI.MVP.1/HLD-TM-JOURNEY.md) - Journey Experience HLD
