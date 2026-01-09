@@ -1,0 +1,507 @@
+---
+alwaysApply: true
+---
+
+# NodeJS NestJS Coding Rules
+
+> Ví dụ coding rules cho Backend project sử dụng NodeJS + NestJS framework
+
+---
+
+## 1. Tổng quan dự án
+
+### 1.1 Thông tin cơ bản
+- **Tên dự án:** `edu-saas-cart-service`
+- **Ngôn ngữ:** TypeScript
+- **Framework chính:** NestJS v10.x
+- **Phiên bản:** 1.0
+- **Base namespace:** `@edu/cart-service`
+
+### 1.2 Công cụ build
+- **Package manager:** npm
+- **Build tool:** NestJS CLI
+- **Runtime:** Node.js 20.x LTS
+- **Package registry:** npm registry (private: `https://registry.company.com/`)
+
+### 1.3 Dependencies chính
+- `@nestjs/core` - NestJS core framework
+- `@nestjs/common` - Common utilities & decorators
+- `@nestjs/typeorm` - TypeORM integration
+- `@nestjs/config` - Configuration management
+- `@nestjs/swagger` - OpenAPI documentation
+- `class-validator` - Request validation
+- `class-transformer` - Object transformation
+
+### 1.4 Chế độ kiến trúc
+- **Kiến trúc:** Layered Architecture + Module-based
+- **Patterns:** Repository Pattern, Dependency Injection, CQRS (optional)
+
+---
+
+## 2. QUAN TRỌNG - Semantic Naming Rules
+
+### 2.1 Quy tắc đặt tên
+
+#### Classes & Interfaces
+- **Format:** PascalCase
+- **Examples:**
+  - `CartService`, `CartController`, `CartRepository`
+  - `CartItemEntity`, `AddToCartDto`, `CartResponseDto`
+  - `ICartService` (interface prefix với `I`)
+
+#### Methods & Functions
+- **Format:** camelCase
+- **Examples:**
+  - `addItemToCart()`, `removeItemFromCart()`, `calculateCartTotal()`
+  - `validateCartOwnership()`, `mergeGuestCartToUserCart()`
+
+#### Variables & Properties
+- **Format:** camelCase
+- **Examples:**
+  - `cartItemId`, `totalAmount`, `isCartEmpty`
+
+#### Constants & Enums
+- **Format:** UPPER_SNAKE_CASE hoặc PascalCase (enum)
+- **Examples:**
+  - `MAX_CART_ITEMS = 100`
+  - `DEFAULT_SESSION_TTL = 1800`
+  - `enum CartStatus { ACTIVE, MERGED, ABANDONED }`
+
+#### Database Fields
+- **Format:** snake_case
+- **Examples:**
+  - `cart_id`, `user_id`, `created_at`, `updated_at`
+
+---
+
+## 3. API Design Rules
+
+### 3.1 API URL Pattern
+
+| Operation | HTTP Method | URL Pattern | Example |
+|-----------|------------|-------------|---------|
+| **Create** | POST | `/api/v1/{resource}` | `POST /api/v1/cart` |
+| **Get by ID** | GET | `/api/v1/{resource}/{id}` | `GET /api/v1/cart/123` |
+| **Simple Search** | GET | `/api/v1/{resource}/search` | `GET /api/v1/carts/search?userId=456` |
+| **Advanced Search** | POST | `/api/v1/{resource}/search` | `POST /api/v1/carts/search` |
+| **Action with ID** | POST/PUT | `/api/v1/{resource}/{id}/{action}` | `POST /api/v1/cart/123/items/add` |
+
+### 3.2 Controller Design
+
+```typescript
+@Controller('api/v1/cart')
+@ApiTags('Cart Management')
+export class CartController {
+  constructor(private readonly cartService: CartService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create new cart' })
+  @ApiResponse({ status: 200, type: CartResponseDto })
+  async createCart(@Body() dto: CreateCartDto): Promise<CartResponseDto> {
+    return this.cartService.createCart(dto);
+  }
+
+  @Post(':cartId/items/add')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Add item to cart' })
+  async addItemToCart(
+    @Param('cartId') cartId: string,
+    @Body() dto: AddCartItemDto,
+  ): Promise<CartResponseDto> {
+    return this.cartService.addItemToCart(cartId, dto);
+  }
+}
+```
+
+---
+
+## 4. Project Structure
+
+```
+src/
+├── modules/
+│   ├── cart/
+│   │   ├── controllers/
+│   │   │   └── cart.controller.ts
+│   │   ├── services/
+│   │   │   └── cart.service.ts
+│   │   ├── repositories/
+│   │   │   └── cart.repository.ts
+│   │   ├── entities/
+│   │   │   ├── cart.entity.ts
+│   │   │   └── cart-item.entity.ts
+│   │   ├── dto/
+│   │   │   ├── create-cart.dto.ts
+│   │   │   ├── add-cart-item.dto.ts
+│   │   │   └── cart-response.dto.ts
+│   │   ├── interfaces/
+│   │   │   └── cart-service.interface.ts
+│   │   └── cart.module.ts
+│   ├── wishlist/
+│   └── user/
+├── common/
+│   ├── decorators/
+│   ├── filters/
+│   ├── guards/
+│   ├── interceptors/
+│   ├── pipes/
+│   └── exceptions/
+├── config/
+│   ├── database.config.ts
+│   ├── redis.config.ts
+│   └── app.config.ts
+├── database/
+│   ├── migrations/
+│   └── seeds/
+├── app.module.ts
+└── main.ts
+```
+
+---
+
+## 5. Database & ORM Rules
+
+### 5.1 TypeORM Configuration
+- **ORM:** TypeORM
+- **Database:** PostgreSQL
+- **Migration:** TypeORM migrations
+- **Naming:** snake_case cho tables/columns
+
+### 5.2 Entity Design
+
+```typescript
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+
+/**
+ * Cart entity representing shopping cart
+ *
+ * @author AI
+ */
+@Entity('carts')
+export class CartEntity {
+  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  id: string;
+
+  @Column({ name: 'user_id', type: 'bigint', nullable: true })
+  userId: string | null;
+
+  @Column({ name: 'session_id', type: 'varchar', length: 255, nullable: true })
+  sessionId: string | null;
+
+  @Column({ name: 'tenant_id', type: 'bigint' })
+  tenantId: string;
+
+  @Column({ name: 'status', type: 'varchar', length: 50, default: 'ACTIVE' })
+  status: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  @Column({ name: 'is_deleted', type: 'boolean', default: false })
+  isDeleted: boolean;
+
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
+}
+```
+
+---
+
+## 6. Exception Handling & Validation
+
+### 6.1 Custom Exceptions
+
+```typescript
+// src/common/exceptions/cart.exception.ts
+import { HttpException, HttpStatus } from '@nestjs/common';
+
+export class CartNotFoundException extends HttpException {
+  constructor(cartId: string) {
+    super(
+      {
+        error: 'CART_NOT_FOUND',
+        message: 'CART_NOT_FOUND',
+        details: { cartId },
+      },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
+
+export class CartItemLimitExceededException extends HttpException {
+  constructor(maxItems: number) {
+    super(
+      {
+        error: 'CART_ITEM_LIMIT_EXCEEDED',
+        message: 'CART_ITEM_LIMIT_EXCEEDED',
+        details: { maxItems },
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+```
+
+### 6.2 DTO Validation
+
+```typescript
+// src/modules/cart/dto/add-cart-item.dto.ts
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsPositive, Min } from 'class-validator';
+
+/**
+ * DTO for adding item to cart
+ *
+ * @author AI
+ */
+export class AddCartItemDto {
+  @ApiProperty({ description: 'Product ID', example: 123 })
+  @IsNotEmpty({ message: 'PRODUCT_ID_REQUIRED' })
+  @IsNumber({}, { message: 'PRODUCT_ID_MUST_BE_NUMBER' })
+  productId: number;
+
+  @ApiProperty({ description: 'Quantity', example: 2, minimum: 1 })
+  @IsNotEmpty({ message: 'QUANTITY_REQUIRED' })
+  @IsNumber({}, { message: 'QUANTITY_MUST_BE_NUMBER' })
+  @IsPositive({ message: 'QUANTITY_MUST_BE_POSITIVE' })
+  @Min(1, { message: 'QUANTITY_MIN_VALUE_IS_1' })
+  quantity: number;
+}
+```
+
+---
+
+## 7. Service Layer Rules
+
+### 7.1 Service Design
+
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+import { CartRepository } from '../repositories/cart.repository';
+import { CartNotFoundException } from '../../../common/exceptions/cart.exception';
+
+/**
+ * Cart service handling business logic
+ *
+ * @author AI
+ */
+@Injectable()
+export class CartService {
+  private readonly logger = new Logger(CartService.name);
+
+  constructor(
+    private readonly cartRepository: CartRepository,
+    // Only inject repositories from same bounded context
+  ) {}
+
+  async addItemToCart(cartId: string, dto: AddCartItemDto): Promise<CartResponseDto> {
+    try {
+      // Validate cart exists
+      const cart = await this.cartRepository.findById(cartId);
+      if (!cart) {
+        throw new CartNotFoundException(cartId);
+      }
+
+      // Business logic here
+      const updatedCart = await this.cartRepository.addItem(cart, dto);
+
+      this.logger.debug(`Item added to cart: cartId=${cartId}, productId=${dto.productId}`);
+
+      return this.mapToResponseDto(updatedCart);
+    } catch (error) {
+      if (error instanceof CartNotFoundException) {
+        throw error; // Re-throw validation exceptions
+      }
+
+      this.logger.error(`Error adding item to cart: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('CART_UPDATE_FAILED');
+    }
+  }
+}
+```
+
+### 7.2 Cross-context Communication
+
+```typescript
+// ❌ WRONG: Directly inject repository from another context
+@Injectable()
+export class CartService {
+  constructor(
+    private readonly cartRepository: CartRepository,
+    private readonly productRepository: ProductRepository, // WRONG!
+  ) {}
+}
+
+// ✅ CORRECT: Call service from another context
+@Injectable()
+export class CartService {
+  constructor(
+    private readonly cartRepository: CartRepository,
+    private readonly productService: ProductService, // CORRECT
+  ) {}
+
+  async addItemToCart(cartId: string, dto: AddCartItemDto): Promise<CartResponseDto> {
+    // Get product info from ProductService
+    const product = await this.productService.getProductById(dto.productId);
+    // ...
+  }
+}
+```
+
+---
+
+## 8. Testing Rules
+
+### 8.1 Testing Framework
+- **Unit test:** Jest
+- **E2E test:** Supertest + Jest
+- **Coverage:** Minimum 80%
+
+### 8.2 Test Examples
+
+```typescript
+// cart.service.spec.ts
+describe('CartService', () => {
+  let service: CartService;
+  let repository: CartRepository;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CartService,
+        {
+          provide: CartRepository,
+          useValue: {
+            findById: jest.fn(),
+            addItem: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<CartService>(CartService);
+    repository = module.get<CartRepository>(CartRepository);
+  });
+
+  describe('addItemToCart', () => {
+    it('test_addItemToCart_withValidData_returnsUpdatedCart', async () => {
+      // Arrange
+      const cartId = '123';
+      const dto = { productId: 456, quantity: 2 };
+      const mockCart = { id: cartId, items: [] };
+      const mockUpdatedCart = { id: cartId, items: [dto] };
+
+      jest.spyOn(repository, 'findById').mockResolvedValue(mockCart);
+      jest.spyOn(repository, 'addItem').mockResolvedValue(mockUpdatedCart);
+
+      // Act
+      const result = await service.addItemToCart(cartId, dto);
+
+      // Assert
+      expect(result.id).toBe(cartId);
+      expect(repository.findById).toHaveBeenCalledWith(cartId);
+      expect(repository.addItem).toHaveBeenCalledWith(mockCart, dto);
+    });
+
+    it('test_addItemToCart_withNonExistentCart_throwsNotFoundException', async () => {
+      // Arrange
+      const cartId = '999';
+      const dto = { productId: 456, quantity: 2 };
+
+      jest.spyOn(repository, 'findById').mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.addItemToCart(cartId, dto)).rejects.toThrow(CartNotFoundException);
+    });
+  });
+});
+```
+
+---
+
+## 9. Logging Rules
+
+### 9.1 Logger Configuration
+
+```typescript
+import { Logger } from '@nestjs/common';
+
+@Injectable()
+export class CartService {
+  private readonly logger = new Logger(CartService.name);
+
+  async someMethod() {
+    this.logger.debug('Debug message'); // Use debug instead of info
+    this.logger.warn('Warning message');
+    this.logger.error('Error message', error.stack);
+  }
+}
+```
+
+---
+
+## 10. Environment & Configuration
+
+### 10.1 Environment Variables
+
+```typescript
+// config/app.config.ts
+import { registerAs } from '@nestjs/config';
+
+export default registerAs('app', () => ({
+  port: parseInt(process.env.PORT, 10) || 3000,
+  nodeEnv: process.env.NODE_ENV || 'development',
+  apiPrefix: process.env.API_PREFIX || 'api/v1',
+}));
+```
+
+### 10.2 Usage in Service
+
+```typescript
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class CartService {
+  constructor(private readonly configService: ConfigService) {}
+
+  getMaxCartItems(): number {
+    return this.configService.get<number>('cart.maxItems', 100);
+  }
+}
+```
+
+---
+
+## 11. Swagger Documentation
+
+```typescript
+// main.ts
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Cart Service API')
+    .setDescription('Cart and Wishlist Management API')
+    .setVersion('1.0')
+    .addTag('Cart Management')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(3000);
+}
+```
+
+---
+
+**Version:** 1.0
+**Framework:** NestJS v10.x
+**Last Updated:** 2026-01-09

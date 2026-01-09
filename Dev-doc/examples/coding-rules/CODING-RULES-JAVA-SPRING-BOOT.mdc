@@ -1,0 +1,972 @@
+---
+alwaysApply: true
+---
+
+# Java Spring Boot Gradle Rules
+
+Tài liệu này tái cấu trúc toàn bộ nội dung theo định dạng Markdown mà Cursor ưu tiên để hiển thị quy tắc. Mọi thông tin gốc được giữ nguyên và nhóm lại theo từng chủ đề để dễ tra cứu.
+
+---
+
+## 1. Tổng quan dự án
+- **Phiên bản:** 1.0
+- **Ngôn ngữ:** Java
+- **Tên dự án:** `edu-saas-iam`
+- **Base package:** `com.edu.saas.iam`
+
+### 1.1 Công cụ build
+- **Build tool:** Gradle
+- **Nexus snapshots:** `https://registry.devops.cardoctor.com.vn/repository/maven-snapshots/`
+  - Credentials: `System.getenv("NEXUS_USERNAME")` / `System.getenv("NEXUS_PASSWORD")`
+  - `snapshotsOnly = false`
+- **Plugins:**
+  - `java`
+  - `com.sf.ec.plugin.spring-boot-conventions` (0.0.1-SNAPSHOT) ## control springboot and java version
+  - `org.owasp.dependencycheck` (7.3.2)
+  - `io.spring.dependency-management` (1.1.7)
+- **Ext versions:** `lombok=1.18.38`, `lombokMapstructBinding=0.2.0`, `mapstruct=1.6.3`, `cecCommon/core/constant/util=0.0.1-SNAPSHOT`
+- **Dependencies chính:** Spring Boot Web, Spring Boot Validation, Lombok, MapStruct, `cp-ec-common`, `cec-core`, `cec-constant`, `cec-util`, Spring Boot Test.
+
+### 1.2 Chế độ kiến trúc
+- `architecture_mode.domain_driven_design = false` (Layered mặc định).
+- Ghi chú: Đặt `true` để bật DDD/Hexagonal, toàn bộ rule phía dưới sẽ tự áp dụng.
+
+### 1.3. **QUAN TRỌNG - SEMANTIC NAMING**:
+- Không được thiết kế class dưới dạng nested class
+- Trong Entity không được sử dụng @Builder
+- Tất cả tên (class, method, property, variable, constant, config key, operation-id, topic name, etc.) phải rõ ngữ nghĩa, mô tả đầy đủ mục đích và chức năng. Tránh tên chung chung, không rõ nghĩa.
+  + ví dụ: dùng "createQuotationRequest" thay vì "create", "sales-quotation-events" thay vì "events", "submitQuotationRequest" thay vì "submit".
+- ID nếu là số thì dùng BIGSERIAL vì nó tự tạo sequence
+  + Nếu ORM=EclipseLink chủ động thêm cấu hình sequence vào Entity, Không dùng native query trong mọi trường hợp
+  - Trong entity không được khai báo index (chỉ khai báo index trong ddl)
+- Các APIs tạo mới và cập nhật chỉ trả về ID ra client (Trả thêm thông tin nếu được mô tả)
+- Các APIs tạo mới chỉ dùng httpStatus 200
+- Các APIs tìm kiếm "/search" tuân thủ mục 3.5 Search Request Pattern
+- **API URL Pattern Rule:**
+  + **Create**: `POST /api/v1/{resource}` - không cần action suffix
+  + **Get by ID**: `GET /api/v1/{resource}/{id}` - không cần action suffix
+  + **Simple Search**: `GET /api/v1/{resource}/search` - dùng query params cho filter đơn giản
+  + **Advance Search**: `POST /api/v1/{resource}/search` - dùng request body cho filter phức tạp
+  + **List subresource**: `GET /api/v1/{resource}/{subresource}/list` (VD: `/products/featured/list`)
+  + **Các operations khác**: PHẢI có action suffix ở cuối URL
+    - Action với ID: `POST /api/v1/{resource}/{id}/{action}` (VD: `/cases/{caseId}/claim`)
+    - Action với subresource: `POST /api/v1/{resource}/{id}/{subresource}/{action}` (VD: `/cart/{itemId}/quantity/update`)
+    - Action không có ID: `POST /api/v1/{resource}/{subresource}/{action}` (VD: `/wishlist/items/to-cart`)
+  + Action suffix phải rõ nghĩa, mô tả hành động (remove, update, claim, unclaim, merge, migrate, load, enroll, etc.)
+- Phải sử dụng custom exception, không được dùng exception của thư viện, java khi throw
+- 1 Service không được chứa nhiều Repo (nếu Repo nó không nằm trong bounder context của Service.)
+  + ví dụ: Order, OrderLine -> 1 Service chứa 2 Repo
+  + ví dụ: Customer, Account -> 1 Service chứa 1 Repo
+- Giao tiếp giữa 2 Bounder Context trong 1 Microservice là service-to-service.
+  + CustomerService muốn giao tiếp với AccountRepo phải qua AccountService
+  + Nếu có bảng relation -> tạo ra Rel***Service để đảm nhận vai trò điều hướng, giao tiếp (có thể chứa Repo của các thực thể liên quan để check existing trên bảng chính) - ( ví dụ: Customer, Account, RelCustomerAccount)
+- Mỗi method mang đặc tính write trong Service phải được bọc try-catch để xử lý lỗi.
+  + ví dụ: log, throw CustomException(EXECUTE_ERROR)
+  + đối với loại customException về validate thì forward lỗi (ví dụ: catch (DuplicateCodeException e) throw e)
+- Mọi request/Response của APIs đều phải comment swagger đầy đủ (Đủ ngữ cảnh để 1 AI LLM có thể hiểu) và không sử dụng các thành phần bị gắn @Deprecated
+- Nếu sử dụng liquibase/flyway mỗi file ddl tương ứng phải có file rollback
+- Validate request (message key tuân thủ UPPER_CASE_SNAKE_CASE):
+    + request ở request DTO (sử dụng spring annotation @Valid, @NotNull, @Size, @Pattern, ...), chỉ trả key vì FE làm đa ngôn ngữ, nội dung message bổ sung trong i18n hỗ trợ 2 ngôn ngữ VI, EN (nếu có), nội dung message chứa chữ cái tiếng Việt dùng unicode
+    + business logic ở service layer (nếu có), sử dụng custom exception với message key (nếu cần)
+- Logging dùng debug thay cho info (nếu log.info)
+- Bất kỳ một thông tin/ngữ cảnh nào trong quá trình tạo code chưa được làm rõ/mông lung hãy đưa ra câu hỏi hoặc gợi ý để người dùng giải đáp.
+---
+
+## 2. Style Guide
+
+### 2.1 Quy tắc đặt tên & import
+- **Naming:** Class/Interface PascalCase, field camelCase, constant UPPER_SNAKE_CASE, method camelCase, package lowercase.
+- **Imports:** Không dùng wildcard, thứ tự `java → jakarta → javax → org → com`, static import luôn đặt cuối.
+
+### 2.2 Annotation & Lombok
+- **Entity/DTO/Request/Response:** `@Getter`, `@Setter`, `@NoArgsConstructor`, `@AllArgsConstructor`.
+- **ServiceImpl:** `@Service`, `@Slf4j`, `@RequiredArgsConstructor`.
+- **Controller:** `@RestController`, `@RequiredArgsConstructor`.
+- **Bắt buộc:** `@Entity + @Table`, `@Repository`, `@Service`, `@RestController + @RequestMapping`.
+
+### 2.3 Comment & AI code
+- Không bắt buộc JavaDoc cho class/method nhưng ưu tiên tên rõ nghĩa.
+- **AI-generated code:** mọi class/method tạo bởi AI phải có JavaDoc chứa `@author AI`.
+  ```
+  /**
+   * [Description]
+   *
+   * @param [param] [description]
+   * @return [description]
+   * @throws [exception] [description]
+   * @author AI
+   */
+  ```
+
+---
+
+## 3. Layered Architecture (áp dụng khi `domain_driven_design == false`)
+
+### 3.1 Cấu trúc thư mục & package
+
+**Cây cấu trúc đầy đủ:**
+
+```
+src/main/java/com/edu/saas/iam/
+├── controller/
+│   └── [Entity]Controller.java          # @RestController, @RequiredArgsConstructor
+├── service/
+│   └── [Entity]Service.java             # Interface only
+├── service/impl/
+│   └── [Entity]ServiceImpl.java         # @Service, @Slf4j, @RequiredArgsConstructor
+├── entity/
+│   └── [Entity].java                    # @Entity, @Table, extend EntityBase
+├── repo/
+│   └── [Entity]Repository.java          # JpaRepository + JpaSpecificationExecutor
+├── mapper/
+│   └── [Entity]Mapper.java              # @Mapper(componentModel = "spring")
+├── model/
+│   ├── dto/
+│   │   └── [Entity]Dto.java             # Internal DTOs
+│   ├── request/
+│   │   ├── Create[Entity]Request.java   # @Schema, @Valid annotations
+│   │   ├── Update[Entity]Request.java
+│   │   └── Search[Entity]Request.java   # @Equal, @Like, PageRequestBase
+│   ├── response/
+│   │   ├── [Entity]Response.java        # @Schema with business context
+│   │   └── [Entity]ListResponse.java
+│   └── enums/
+│       └── [Entity]Status.java          # Business enums
+├── config/
+│   ├── SecurityConfig.java              # Security configuration
+│   ├── OpenApiConfig.java               # SpringDoc configuration
+│   └── DatabaseConfig.java              # Datasource, JPA config
+└── constant/
+    └── [Module]Constants.java           # UPPER_SNAKE_CASE constants
+
+src/main/resources/
+├── application.yml                       # Configuration
+├── application-dev.yml
+├── application-prod.yml
+└── db/
+    └── changelog/
+        └── db.changelog-master.xml      # Liquibase migrations
+```
+
+**Packages chuẩn:** `com.edu.saas.iam.<layer>` tương ứng từng thư mục.
+
+### 3.2 Coding Rules
+
+#### 3.2.0 Package Structure
+- **What:** Quy hạch cách tổ chức class (chủ yếu là DTOs).
+- **When:** Triển khai các tính năng, tạo class...
+- **Then:**
+  - `model/request/customer/*.class, model/request/account/*.class, model/response/customer/*.class, model/response/account/*.class, ...`
+- **Why:** Giữ cấu trúc rõ ràng, dễ tìm kiếm và bảo trì.
+
+#### 3.2.1 Controller Layer
+- **What:** `@RestController`, `@RequestMapping("/api/v1/{module}")`, `@RequiredArgsConstructor`, gắn `@Tag`.
+- **When:** Mọi endpoint REST, kể cả internal.  
+- **Then:** 
+  - Chỉ inject service interface, validate payload (`@Valid`), trả `SuccessResponse<T>` qua `ResponseUtil.ok()`.
+  - Không autowire repository trừ tình huống đặc biệt.
+  - SpringDoc đầy đủ với `@Tag`, `@Operation`, `@Parameter`, `@ApiResponse`.
+- **Why:** Giữ controller mỏng, tránh business logic lẫn vào presentation.
+- **SDK Reference:** 
+  - `ResponseUtil.ok()` và `SuccessResponse<T>` từ `cec-core` - xem `.aiengine/sdk_tutorial/cec-core.md` để biết cách sử dụng.
+
+#### 3.2.2 Service Layer
+- **What:** Interface-only; implementation tại `service.impl`, annotate `@Service`, dùng `@RequiredArgsConstructor`.  
+- **When:** Bất kỳ nghiệp vụ.  
+- **Then:**  
+  - Đa thao tác DB → `@Transactional`, read-only → `@Transactional(readOnly = true)`.
+  - Chỉ trả DTO, mọi thao tác DB đi qua Repository, không query trực tiếp.
+  - Check tồn tại: `repository.findById(id).orElseThrow(...)`.
+- **Why:** Bảo đảm tách DB logic khỏi controller, hỗ trợ unit test.
+
+#### 3.2.3 MapStruct Configuration
+- **What:** Mapper MapStruct với cấu hình chuẩn.  
+- **When:** Tất cả mapping entity ↔ DTO.  
+- **Then:**  
+  ```java
+  @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+          nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+          unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  ```
+- **Why:** Compile-time safety, đồng bộ contract.
+
+#### 3.2.4 SpringDoc Rules
+- **What:** Tài liệu API đầy đủ cho mọi endpoint.  
+- **When:** Mọi REST controller.  
+- **Then:** 
+  - `@Tag` mô tả domain/business của controller.
+  - `@Operation` phải có summary + description chi tiết (business purpose, behavior, side effect, rule).
+  - `@Parameter` cho path/query param (description + format + required + example).
+  - `@ApiResponse` cho mọi HTTP code (ý nghĩa business + trigger).
+  - Request body được mô tả qua `@Schema` trong DTO.
+- **Why:** Cung cấp bối cảnh đầy đủ cho LLM và developer.
+
+#### 3.2.5 DTO @Schema Rules
+- **What:** Schema documentation cho DTO.  
+- **When:** Mọi DTO request/response.  
+- **Then:** 
+  - Class-level: mô tả business, thời điểm dùng.
+  - Field-level: nêu ý nghĩa, format/constraint, validation, ví dụ, required.
+- **Why:** Giúp LLM và developer hiểu rõ business context.
+
+#### 3.2.6 Service Interface JavaDoc
+- **What:** JavaDoc đầy đủ cho service interface.  
+- **When:** Mọi service interface.  
+- **Then:** Mô tả từng tham số/return/exception với business context + `@author AI`.  
+- **Why:** Cung cấp bối cảnh nghiệp vụ cho developer và LLM.
+
+#### 3.2.7 Agentic Guidance
+- **What:** Mô tả chi tiết trong SpringDoc và JavaDoc.  
+- **When:** Mọi class/method do AI tạo.  
+- **Then:** Mô tả business purpose, data flow, validation, side effect, error scenario, quan hệ dữ liệu, ví dụ minh họa.  
+- **Why:** Giúp LLM hiểu rõ context khi generate code tiếp theo.
+
+### 3.3 Data Layer
+
+#### 3.3.1 Entity
+- **What:** Entity carrier dữ liệu, extend `EntityBase`, sử dụng ORM eclipse-link, dùng `@SequenceGenerator`, override `onInsert()` khi cần.  
+- **When:** Mọi entity trong persistence layer.  
+- **Then:** 
+  - Không dùng quan hệ JPA (`@ManyToOne`, `@OneToMany`, ...).
+  - Quan hệ lưu ID dạng primitive/wrapper, join xử lý ở Service.
+- **Why:** Tránh lazy-loading bug và dependency phức tạp.
+- **SDK Reference:** 
+  - `EntityBase` từ `cec-datasource` - xem `.aiengine/sdk_tutorial/cec-datasource.md` để biết các method và lifecycle hooks có sẵn.
+
+#### 3.3.2 Repository
+- **What:** Repository kế thừa `JpaRepository<Entity, ID>` + `JpaSpecificationExecutor<Entity>` -> (hỗ trợ tìm kiếm phân trang).  
+- **When:** Mọi repository interface.  
+- **Then:** 
+  - Không chứa business logic, tránh `@Query` join fetch.
+  - Dùng `JpaSpecificationExecutor` để hỗ trợ dynamic query.
+- **Why:** Tách biệt data access và business logic.
+
+#### 3.3.3 Mapper
+- **What:** MapStruct mapper với cấu hình chuẩn.  
+- **When:** Tất cả mapping entity ↔ DTO.  
+- **Then:** 
+  ```java
+  @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
+          nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+          unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  ```
+- **Why:** Compile-time safety, đồng bộ contract.
+
+### 3.4 DTO Pattern
+- Request DTO: `model.request`.
+- Response DTO: `model.response`.
+- DTO nội bộ: `model.dto`.
+- Không expose entity ra ngoài service layer.
+
+### 3.5 Search Request Pattern
+- **What:** `Search{Entity}Request` chứa `@Equal`, `@Like`, `@In`, `@Between`, `@GreaterThan`, `@LessThan`, `@GreaterThanOrEqual`, `@LessThanOrEqual` (package `com.sf.base.jpa.annotation.search`) của sdk `cec-jpa` xem tại `.aiengine\sdk_tutorial\cec-jpa.md` và thêm `private PageRequestBase page = new PageRequestBase();` để phân trang.  
+- **When:** API list/search.  
+- **Then:**  
+  ```java
+  Specification<Entity> spec = defaultSpecification.createSpec(request);
+  Pageable pageable = SearchUtil.getPageableFromParam(request.getPage(), request.getSize(), request.getSort(), request.getOrder());
+  Page<{Entity}Response> result = repository.findAll(spec, pageable).map(mapper::toResponse);
+  ```
+- **Why:** Reuse DefaultSpecification & SearchUtil, tránh viết query thủ công.
+- **SDK Reference:** 
+  - `@Equal`, `@Like`, `@In`, `@Between`, etc. từ `cec-jpa` (package `com.sf.base.jpa.annotation.search`).
+  - `DefaultSpecification` và `SearchUtil` từ `cec-jpa` - xem `.aiengine/sdk_tutorial/cec-jpa.md` để biết cách sử dụng dynamic query và pagination.
+  - `PageRequestBase` từ `cec-jpa` - xem `.aiengine/sdk_tutorial/cec-jpa.md` để biết các field và validation.
+- **Swagger:** `@Schema` mô tả rõ phân trang (page/size/sort/order + default + lợi ích business).
+
+### 3.6 Database Operations
+- Nhiều thao tác liên tiếp → `@Transactional`.
+- Đọc-only → `@Transactional(readOnly = true)`.
+- Có thể dùng `transactionTemplate` nếu cần custom.
+- Kiểm tra tồn tại: `repository.findById(...).orElseThrow(() -> ...)`.
+
+### 3.7 Patterns & Agentic guidance
+- **Enforce:** ServiceInterfacePattern, RepositoryPattern, SpecificationPattern, DTOPattern, MapperPattern.
+- **Prohibit:** GodClass, ServiceWithMultipleResponsibilities, CircularDependencies, EntityExposureOutsideServiceLayer, BusinessLogicInController, BusinessLogicInRepository.
+- **Development flow:** Entity → Repository → Service Interface → ServiceImpl → Mapper → Controller → DTOs.
+- **Response structure (Cursor hiển thị):** entity, repository, service_interface, service_impl, mapper, dto_request, dto_response, controller, tests.
+- **Code generation note:** Controller dùng service interface, search request phải có annotation + pagination, service interface JavaDoc đầy đủ, entity không dùng FK annotation.
+
+---
+
+## 4. Domain Driven Design (áp dụng khi `domain_driven_design == true`)
+
+### 4.0 Khái niệm Context và Sub-domain trong DDD
+- **What:** 
+  - Trong cấu trúc này, `{context}` = **Sub-domain** (phần nghiệp vụ bên trong một Bounded Context).
+  - Mỗi sub-domain có cấu trúc đầy đủ: aggregate, command, entities, ports, query, service, value_object.
+- **When:** 
+  - Trong MSA: mỗi service đã được chia theo BC, nên trong một service chỉ có 1 bounded context duy nhất.
+  - Nhưng bên trong BC đó có thể có nhiều sub-domain (ví dụ: service "Sales" có sub-domain `pim`, `quotation_request`, `yearly_sequence`).
+  - **Lưu ý:** Các phần nghiệp vụ liên quan chặt chẽ (ví dụ: `quotation_request_requirement` là một phần của `quotation_request`) nên được tổ chức như entities hoặc value objects bên trong sub-domain chính, không tách thành sub-domain riêng.
+- **Then:** 
+  - Cấu trúc: `domain/{sub-domain}/` cho mỗi sub-domain trong cùng service.
+  - Mỗi sub-domain có cấu trúc đầy đủ:
+    ```
+    domain/
+    ├── common/                    # Dùng chung cho tất cả sub-domains
+    │   ├── constant/
+    │   ├── enums/
+    │   ├── port/
+    │   └── vo/
+    ├── pim/                       # Sub-domain 1
+    │   ├── aggregate/
+    │   ├── command/
+    │   ├── entities/
+    │   ├── ports/out/repository/
+    │   ├── query/
+    │   ├── service/
+    │   └── value_object/
+    ├── quotation_request/         # Sub-domain 2
+    │   ├── aggregate/
+    │   ├── command/
+    │   ├── entities/
+    │   ├── ports/out/repository/
+    │   ├── query/
+    │   ├── service/
+    │   └── value_object/
+    └── yearly_sequence/          # Sub-domain 3
+        ├── aggregate/
+        ├── entities/
+        ├── ports/out/repository/
+        ├── service/
+        └── value_object/
+    ```
+- **Why:** 
+  - Trong MSA, ranh giới service = ranh giới bounded context, nên không cần tách nhiều BC trong cùng service.
+  - Nhưng mỗi BC có thể chứa nhiều sub-domain để quản lý các phần nghiệp vụ khác nhau.
+  - Mỗi sub-domain có thể có cấu trúc đầy đủ (aggregate, command, ports, service) để độc lập và dễ bảo trì.
+  - Các sub-domain trong cùng BC có thể giao tiếp với nhau qua domain service hoặc domain events.
+- **Ví dụ thực tế:** Service "Sales" (1 BC) chứa các sub-domain:
+  - `domain/pim/` → quản lý Product Information Management
+  - `domain/quotation_request/` → quản lý yêu cầu báo giá (chứa `QuotationRequestRequirement` như một entity hoặc value object bên trong)
+  - `domain/yearly_sequence/` → quản lý sequence theo năm
+
+### 4.1 Cấu trúc & package
+
+**Cây cấu trúc đầy đủ (Hexagonal/Clean Architecture):**
+
+```
+src/main/java/{group_path}/{module}/
+├── {Module}Application.java
+├── adapters
+│   └── infrastructure
+│       ├── in
+│       │   ├── event
+│       │   │   ├── handler
+│       │   │   │   └── {Context}EventHandler.java
+│       │   │   └── model
+│       │   │       └── {Context}KafkaModel.java
+│       │   └── rest
+│       │       ├── controller
+│       │       │   └── {Context}Controller.java
+│       │       └── model
+│       │           ├── request
+│       │           │   └── {Context}Request.java
+│       │           └── response
+│       │               └── {Context}Response.java
+│       └── out
+│           └── persistence
+│               ├── entity
+│               │   └── {Context}Entity.java
+│               ├── jpa
+│               │   └── {Context}JpaRepository.java
+│               ├── mapper
+│               │   └── {Context}PersistenceMapper.java
+│               └── implement
+│                   └── {Context}RepoAdapter.java
+├── application
+│   ├── configuration
+│   │   ├── OpenApiConfig.java
+│   │   ├── ExceptionConfig.java
+│   │   └── RestClientConfig.java
+│   ├── mapper
+│   │   └── {Context}CommandMapper.java
+│   └── usecase
+│       └── {context}
+│           ├── Create{Context}Usecase.java
+│           ├── Update{Context}Usecase.java
+│           ├── Search{Context}Usecase.java
+│           └── handler
+│               ├── Create{Context}UsecaseHandler.java
+│               ├── Update{Context}UsecaseHandler.java
+│               └── Search{Context}UsecaseHandler.java
+├── domain
+│   ├── common
+│   │   ├── constant
+│   │   ├── enums
+│   │   ├── port
+│   │   │   └── BaseRepoPort.java
+│   │   └── vo
+│   │       └── AuditInformation.java
+│   └── {context}
+│       ├── aggregate
+│       │   └── {Context}Aggregate.java
+│       ├── command
+│       │   └── Create{Context}Command.java
+│       ├── entities
+│       │   └── {Context}.java
+│       ├── ports
+│       │   └── out
+│       │       └── repository
+│       │           └── {Context}RepoPort.java
+│       ├── query
+│       │   └── Search{Context}Query.java
+│       ├── service
+│       │   ├── {Context}Service.java
+│       │   └── impl
+│       │       └── {Context}ServiceImpl.java
+│       └── value_object
+│           ├── {Context}Id.java
+│           └── {Context}Status.java
+└── resources
+    ├── application.yml
+    ├── application-profiles*.yml
+    ├── db
+    │   └── changelog
+    │       ├── changelog-master.xml
+    │       └── v1.0
+    │           ├── changelog-v1.0.xml
+    │           ├── ddl
+    │           │   ├── 001-create-{context}-table.sql
+    │           │   └── 00x-xxx-{context}-table.sql
+    │           └── rollback
+    │               ├── rollback-001-create-{context}-table.sql
+    │               └── rollback-00x-xxx-{context}-table.sql
+    └── i18n
+        ├── messages.properties
+        ├── messages_en.properties
+        └── messages_vi.properties
+```
+
+**Packages chuẩn:** `{group_path}.{module}.<layer>.<sublayer>` (e.g., `com.edu.saas.iam.domain.pim.aggregate`)
+
+**Lưu ý về `{context}`:**
+- Trong MSA, mỗi service = 1 Bounded Context, nhưng có thể chứa nhiều sub-domain.
+- `{context}` trong cấu trúc này = **Sub-domain** (ví dụ: `pim`, `quotation_request`, `yearly_sequence`).
+- Mỗi sub-domain có cấu trúc đầy đủ: `domain/{sub-domain}/aggregate`, `domain/{sub-domain}/command`, `domain/{sub-domain}/ports`, etc.
+
+**Key principles:**
+- **Application layer** định nghĩa tất cả bounded contexts của service, orchestrates use cases, gọi domain service
+- **Domain layer** không phụ thuộc vào bất kỳ layer nào (pure business logic), đại diện cho LDM (Logical Data Model)
+  - `domain/{context}/aggregate` → aggregates (rich domain models)
+  - `domain/{context}/value_object` → value objects (immutable)
+  - `domain/{context}/entities` → domain entities (LDM, không phải database entities, nhưng cấu trúc tương tự)
+  - `domain/{context}/service` → domain service (gọi aggregate, repoPort và xử lý logic giữa nhiều aggregate thông qua port)
+- **Adapters layer** (infrastructure) implements technical details (DB, messaging, external APIs)
+  - `adapters/infrastructure/out/persistence/entity` → PDM (Physical Data Model) - JPA entities cho database
+  - `adapters/infrastructure/in/out` → clients, cache, db, bridge patterns, facade patterns
+- **Adapters/in/rest** exposes REST endpoints, maps requests/responses
+- **Application/usecase/handler** chỉ orchestrate domain/service và convert req/res, không gọi trực tiếp sub-domain/port khác ngoài domain service
+
+### 4.2 Coding Rules
+
+#### 4.2.1 Domain Layer (LDM - Logical Data Model)
+- **What:** Domain layer chứa business logic thuần, không phụ thuộc infrastructure.  
+- **When:** Mọi domain aggregate, entity, value object, service.  
+- **Then:** 
+  - **Aggregate:** giàu hành vi, bảo vệ consistency (invariants), **không có setter, chỉ có getter**, method trả `this`. Xem ví dụ ở mục 4.2.2.
+  - **Value object:** immutable.
+  - **Domain service:**  gọi aggregate cho logic entity -> gọi repoPort và logic giữa nhiều aggregate thông qua port.
+  - **Repository port interface:** trong `domain/{context}/ports/out/repository` (không phụ thuộc infrastructure).
+  - **Entities:** trong `domain/{context}/entities` (LDM - domain model, không phải JPA entity, nhưng cấu trúc tương tự database entities).
+  - **Command:** trong `domain/{context}/command`, Query trong `domain/{context}/query`.
+  - Có thể dùng domain events trong `domain/{context}/event`.
+- **Why:** Đảm bảo domain logic độc lập, dễ test và tái sử dụng.
+
+#### 4.2.2 Aggregate Rules
+- **What:** Aggregates không setter, chỉ getter, mọi method trả `this`, bao gồm valued object và entity nội bộ.  
+- **When:** Tạo/ cập nhật domain state.  
+- **Then:**  
+  ```java
+  public class Aggregate {
+      private Long id;
+      private List<ValueObject> details;
+
+      public Aggregate approve() {
+          validateInvariant();
+          this.status = Status.APPROVED;
+          return this;
+      }
+  }
+  ```
+- **Why:** Đảm bảo invariants (ví dụ: quotation chỉ submit khi có requirement hợp lệ) được kiểm soát tại một điểm.
+
+#### 4.2.3 Application Layer
+- **What:** `Usecase` interface mô tả input/output; `UsecaseHandler` (`@Service`, `@RequiredArgsConstructor`, `@Slf4j`) chỉ orchestrate domain/service và convert DTO <-> domain.  
+- **When:** Mọi flow business.  
+- **Then:** 
+  - Handler gọi domain service hoặc aggregate thông qua port, không tham chiếu trực tiếp sub-domain khác hoặc adapter.
+  - Chỉ orchestration, transaction boundary (`@Transactional`), chuyển request → command (qua mapper), gọi domain service.
+  - Không chứa business logic, không gọi trực tiếp sub-domain/port ngoài domain service.
+  - Configuration trong `application/configuration`.
+  - Mapper trong `application/mapper` để chuyển request → command.
+- **Why:** Cô lập domain để testing & reuse, đảm bảo application layer là boundary transaction.
+
+#### 4.2.4 Adapters Layer
+- **What:** Adapters implement technical details (DB, messaging, external APIs).  
+- **When:** Tính năng cần giao tiếp thế giới ngoài.  
+- **Then:** 
+  - **Inbound REST controller:** tại `adapters/infrastructure/in/rest/controller`, `@RestController`, inject usecase interface, dùng DTO + `@Valid`, trả `ResponseUtil.ok()`, có `@Tag`.
+  - **Event handler:** tại `adapters/infrastructure/in/event/handler`, chỉ convert DTO → usecase.
+  - **Persistence entity (PDM):** tại `adapters/infrastructure/out/persistence/entity` - JPA entities cho database, không quan hệ JPA, chỉ lưu FK dạng ID, extend `EntityBase`.
+  - **JPA repository:** tại `adapters/infrastructure/out/persistence/jpa`.
+  - **Repository adapter:** implementation tại `adapters/infrastructure/out/persistence/implement`, thực thi domain repository port.
+  - **Persistence mapper:** MapStruct trong `adapters/infrastructure/out/persistence/mapper` để map Domain (LDM) ↔ JPA entity (PDM).
+  - Infrastructure có thể chứa: in/out clients, cache, db, bridge patterns, facade patterns, mediator patterns (nếu có sử dụng).
+- **Why:** Dễ thay thế event bus/database khác mà không đụng domain.
+- **SDK Reference:** 
+  - `EntityBase` từ `cec-jpa` cho persistence entity - xem `.aiengine/sdk_tutorial/cec-jpa.md`.
+  - `ResponseUtil.ok()` từ `cec-core` cho REST response - xem `.aiengine/sdk_tutorial/cec-core.md`.
+  - Kafka utilities từ `cec-kafka` nếu dùng event - xem `.aiengine/sdk_tutorial/cec-kafka.md`.
+
+#### 4.2.5 DTO Pattern
+- **What:** DTO pattern cho các layer.  
+- **When:** Trao đổi dữ liệu giữa các layer.  
+- **Then:** 
+  - REST DTO trong `adapters/infrastructure/in/rest/model/request|response`.
+  - Application mapper trong `application/mapper` để chuyển request → command.
+  - Domain object không lộ ra ngoài domain layer.
+- **Why:** Tách biệt contract giữa các layer.
+
+#### 4.2.6 Database Operations
+- **What:** Transaction và persistence operations.  
+- **When:** Mọi thao tác database.  
+- **Then:** 
+  - Transaction khai báo ở usecase handler (`@Transactional`), domain không biết transaction.
+  - Kiểm tra tồn tại qua domain repository port `.orElseThrow`.
+- **Why:** Đảm bảo transaction boundary đúng và xử lý lỗi nhất quán.
+
+### 4.2.1 Ví dụ nhiều Sub-domain trong cùng Bounded Context (MSA)
+- **What:** Trong MSA, mỗi service = 1 Bounded Context, nhưng bên trong BC đó có thể có nhiều sub-domain, mỗi sub-domain có cấu trúc đầy đủ.
+- **When:** Service có nhiều phần nghiệp vụ liên quan nhưng vẫn thuộc cùng một BC (ví dụ: service "Sales" có sub-domain `pim`, `quotation_request`, `yearly_sequence`).
+- **Then:** 
+  ```
+  domain/
+  ├── common/                    # Dùng chung cho tất cả sub-domains
+  │   ├── constant/Constants.java
+  │   ├── enums/
+  │   │   ├── SaaSMessageGroup.java
+  │   │   └── SfBusinessExceptionEnum.java
+  │   ├── port/BaseRepoPort.java
+  │   └── vo/AuditInformation.java
+  ├── pim/                       # Sub-domain 1
+  │   ├── aggregate/PimAggregate.java
+  │   ├── command/
+  │   │   ├── CreatePimCommand.java
+  │   │   └── UpdatePimCommand.java
+  │   ├── entities/
+  │   │   ├── PimModel.java
+  │   │   └── PimGrade.java
+  │   ├── ports/out/repository/
+  │   │   ├── PimRepoPort.java
+  │   │   └── PimGradeRepoPort.java
+  │   ├── query/
+  │   │   └── SearchPimQuery.java
+  │   ├── service/
+  │   │   ├── PimService.java
+  │   │   └── impl/PimServiceImpl.java
+  │   └── value_object/
+  │       ├── PimId.java
+  │       └── CourseStatusEnum.java
+  ├── quotation_request/         # Sub-domain 2
+  │   ├── aggregate/QuotationRequestAggregate.java
+  │   ├── entities/
+  │   │   ├── QuotationRequestModel.java
+  │   │   └── QuotationRequestRequirementModel.java  # Entity con, là một phần của QuotationRequest, nhưng có bảng riêng
+  │   ├── ports/out/repository/
+  │   │   ├── QuotationRequestRepoPort.java
+  │   │   ├── QuotationRequestParentSearchRepoPort.java
+  │   │   └── QuotationRequestRequirementRepoPort.java
+  │   ├── service/
+  │   │   ├── QuotationRequestService.java
+  │   │   ├── impl/QuotationRequestServiceImpl.java
+  │   │   ├── QuotationRequestRequirementService.java
+  │   │   ├── impl/QuotationRequestRequirementServiceImpl.java
+  │   │   └── strategy/QuotationRequestStrategy.java
+  │   └── value_object/
+  │       ├── QuotationRequestStatus.java
+  │       ├── QuotationRequestRequirement.java  # Value object cho requirement (nếu cần)
+  │       ├── LearningGoal.java                 # Value object liên quan
+  │       └── TimeRange.java                    # Value object liên quan
+  └── yearly_sequence/          # Sub-domain 3
+      ├── aggregate/YearlySequenceAggregate.java
+      ├── entities/YearlySequenceModel.java
+      ├── ports/out/repository/YearlySequenceRepoPort.java
+      ├── service/
+      │   ├── YearlySequenceService.java
+      │   └── impl/YearlySequenceServiceImpl.java
+      └── value_object/TypeCode.java
+  ```
+- **Lưu ý quan trọng:** 
+  - `QuotationRequestRequirement` là một phần của `quotation_request` sub-domain, không phải sub-domain riêng.
+  - **Nếu có bảng riêng trong database:**
+    - Tổ chức như **Entity con** (`entities/QuotationRequestRequirementModel.java`) trong cùng sub-domain
+    - **Vẫn có Repository port riêng** (`ports/out/repository/QuotationRequestRequirementRepoPort.java`) vì là bảng riêng
+    - **Có thể có Service riêng** (`service/QuotationRequestRequirementService.java`) nếu cần logic nghiệp vụ riêng
+    - Tất cả nằm trong `domain/quotation_request/`, không tách thành sub-domain riêng
+  - **Nếu không có bảng riêng:**
+    - Tổ chức như **Value object** (`value_object/QuotationRequestRequirement.java`) nếu immutable và không có identity riêng
+  - Quyết định dựa trên: có bảng riêng không, có identity riêng không, có lifecycle độc lập không, có cần query riêng không.
+- **Why:** 
+  - Nhưng mỗi BC có thể chứa nhiều sub-domain để quản lý các phần nghiệp vụ khác nhau.
+  - Mỗi sub-domain có cấu trúc đầy đủ (aggregate, command, ports, service) để độc lập và dễ bảo trì.
+  - Các sub-domain trong cùng BC có thể giao tiếp với nhau qua domain service hoặc domain events.
+  - Nếu sau này cần tách thành nhiều BC, tách thành nhiều service riêng biệt.
+
+### 4.3 Patterns & Agentic guidance
+- **Enforce:** HexagonalArchitecture, DomainDrivenDesign, AggregatePattern, ValueObjectPattern, RepositoryPattern (Port/Adapter), UseCasePattern, DomainEventPattern.
+- **Prohibit:** GodClass, AnemicDomainModel, BusinessLogicInInfrastructure/ApplicationLayer/Controller, CircularDependencies, DomainDependencyOnInfrastructure, DirectSubDomainAccessFromHandler.
+- **Development flow:** 
+  1. Domain Aggregate → Domain Command/Query → Domain Repository Port → Domain Service
+  2. Application Usecase Interface → Usecase Handler
+  3. Adapters: Persistence Entity → JPA Repository → Repository Adapter (implement port) → Persistence Mapper
+  4. REST Controller → REST DTO
+- **Response structure:** domain_aggregate, domain_command, domain_query, domain_entities, domain_valueobject, domain_repository_port, domain_service, application_usecase, application_usecase_handler, application_mapper, adapters_persistence_entity, adapters_jpa_repository, adapters_repository_adapter, adapters_persistence_mapper, adapters_rest_controller, adapters_rest_dto, tests.
+- **Code-gen hints:** 
+  - Domain aggregate không JPA annotation, không setter, method trả `this` (create dùng static để tạo Aggregate).
+  - JPA entity ở `adapters/infrastructure/out/persistence/entity` không quan hệ, chỉ lưu ID.
+  - Mapper chuyển domain model ↔ JPA entity.
+  - Controller inject usecase interface, không inject domain service trực tiếp.
+  - Usecase handler chỉ orchestrate, không gọi trực tiếp sub-domain/port.
+
+---
+
+## 5. Test-Driven Development (TDD)
+
+> **Tutorial đầy đủ**: Xem [dd/overview/template/tdd-tutorial.md](dd/overview/template/tdd-tutorial.md) để hiểu chi tiết về TDD methodology và examples.
+
+### 5.1 TDD Core Rules
+
+#### 5.1.1 RED → GREEN → REFACTOR Cycle (Bắt buộc)
+- **What:** Chu trình TDD bắt buộc cho mọi feature development.
+- **When:** Mọi feature mới, bug fix, refactoring.
+- **Then:**
+  1. **RED**: Viết failing test trước (test PHẢI fail)
+  2. **GREEN**: Viết code tối thiểu để test pass (không anticipatory design)
+  3. **REFACTOR**: Cải thiện code quality (tất cả test vẫn pass)
+- **Why:** Đảm bảo code được thiết kế từ test, giảm bug, tăng maintainability.
+
+#### 5.1.2 Test Naming Convention (Chuẩn Google)
+- **Format:** `should_<expected_behavior>_when_<context>`
+- **Examples:**
+  ```java
+  should_createProduct_when_validCommand()
+  should_throwInvalidStateException_when_publishArchivedProduct()
+  should_return201_when_createProductSuccessfully()
+  should_return400_when_invalidRequestBody()
+  ```
+
+#### 5.1.3 Test Structure (Given-When-Then)
+- **What:** Mọi test phải theo cấu trúc Given-When-Then.
+- **Then:**
+  ```java
+  @Test
+  void should_createProduct_when_validCommand() {
+      // ============ GIVEN (Arrange) ============
+      CreateProductCommand command = CreateProductCommand.builder()
+          .name("Product A")
+          .price(100L)
+          .build();
+      when(repository.save(any())).thenReturn(savedProduct);
+
+      // ============ WHEN (Act) ============
+      ProductDto result = service.createProduct(command);
+
+      // ============ THEN (Assert) ============
+      assertNotNull(result.getId());
+      assertEquals("Product A", result.getName());
+      verify(repository).save(any());
+  }
+  ```
+
+#### 5.1.4 Single Behavior Rule
+- **What:** Một test chỉ test một behavior duy nhất.
+- **Why:** Dễ debug, dễ maintain, rõ ràng khi fail.
+
+### 5.2 Mocking Rules
+
+#### 5.2.1 What to Mock
+| Layer | MUST Mock | NEVER Mock |
+|-------|-----------|------------|
+| **Domain** | Clock, Random, External Domain Services | Value Objects, Entities, Aggregates |
+| **Application** | Repository Ports, Event Publisher, External Clients | Domain Objects, Commands, DTOs |
+| **Infrastructure** | DB connections, Kafka, HTTP clients | JPA entities (dùng @DataJpaTest) |
+| **Interface** | Application Services/Usecases | Request/Response DTOs |
+
+#### 5.2.2 Mock Behavior, Not Implementation
+```java
+// ✅ GOOD: Verify observable behavior
+verify(eventPublisher).publish(any(ProductCreatedEvent.class));
+
+// ❌ BAD: Verify implementation details
+verify(service).validateProduct(any()); // Private method
+```
+
+#### 5.2.3 Never Mock Domain Objects
+```java
+// ✅ GOOD: Create real domain objects
+Money price = new Money(100);              // Value Object - tạo thật
+Product product = Product.create("A", price); // Aggregate - tạo thật
+
+// ❌ BAD: Mock domain objects
+Money mockPrice = mock(Money.class);       // NEVER
+Product mockProduct = mock(Product.class); // NEVER
+```
+
+### 5.3 Test Structure by Architecture
+
+#### 5.3.1 Layered Architecture Test Structure
+```
+src/test/java/com/edu/saas/{module}/
+├── controller/
+│   └── [Entity]ControllerTest.java          # @WebMvcTest
+├── service/
+│   └── impl/
+│       └── [Entity]ServiceImplTest.java     # Unit test với mock
+├── repo/
+│   └── [Entity]RepositoryTest.java          # @DataJpaTest
+└── mapper/
+    └── [Entity]MapperTest.java              # Unit test
+```
+
+#### 5.3.2 DDD/Hexagonal Architecture Test Structure
+```
+src/test/java/{group_path}/{module}/
+├── domain/
+│   └── {context}/
+│       ├── aggregate/
+│       │   └── {Context}AggregateTest.java      # Unit test (no mock)
+│       ├── service/
+│       │   └── {Context}ServiceTest.java        # Unit test với mock port
+│       └── value_object/
+│           └── {ValueObject}Test.java           # Unit test (no mock)
+├── application/
+│   └── usecase/
+│       └── {context}/
+│           └── handler/
+│               └── {Action}UsecaseHandlerTest.java  # Unit test
+├── adapters/
+│   └── infrastructure/
+│       ├── in/rest/controller/
+│       │   └── {Context}ControllerTest.java     # @WebMvcTest
+│       └── out/persistence/
+│           ├── implement/
+│           │   └── {Context}RepoAdapterTest.java # @DataJpaTest
+│           └── mapper/
+│               └── {Context}PersistenceMapperTest.java
+└── integration/
+    └── {Context}IntegrationTest.java            # Full integration
+```
+
+### 5.4 Coverage Requirements
+
+| Layer | Minimum | Target |
+|-------|---------|--------|
+| **Domain (Aggregate/Entity/VO)** | 80% | 95%+ |
+| **Application (UseCase/Handler)** | 70% | 85% |
+| **Infrastructure (Repository/Client)** | 60% | 75% |
+| **Interface (Controller)** | 60% | 75% |
+| **Overall** | 70% | 80% |
+
+### 5.5 Test Speed Requirements
+
+| Test Type | Target | Max |
+|-----------|--------|-----|
+| Unit test | < 10ms | < 50ms |
+| Module suite | < 1s | < 5s |
+| Integration test | < 100ms | < 500ms |
+| Full suite | < 5 min | < 10 min |
+
+### 5.6 AI TDD RuleSet
+
+```yaml
+AI_TDD_RULES:
+  1. ALWAYS follow RED → GREEN → REFACTOR
+  2. Generate test BEFORE implementation
+  3. Naming: should_<behavior>_when_<condition>
+  4. Structure: Given – When – Then (no if/else/loops in test)
+  5. One behavior per test
+  6. Mock: DB, Kafka, HTTP, Clock (external dependencies)
+  7. Never mock: Entity, Value Object, Aggregate, DTO
+  8. Code minimal to pass test
+  9. Refactor only when ALL tests pass
+  10. Test must be: deterministic, isolated, fast, readable
+  11. Verify outcomes, NOT implementation details
+  12. Never use randomness or system time
+  13. Never write code without failing test
+  14. Use dependency injection, prefer pure functions
+  15. Coverage: Domain 80%+, Application 70%+
+```
+
+### 5.7 Test Generation from User Story
+
+**Input:** User Story với Acceptance Criteria (Given-When-Then format)
+
+**Output:** Test cases theo layer:
+1. **Domain tests:** Business rules, state transitions, invariants
+2. **Application tests:** Use case flows, orchestration
+3. **Controller tests:** API contracts, HTTP status codes
+4. **Repository tests:** Persistence operations
+
+**Flow:**
+```
+User Story (AC: Given-When-Then)
+    │
+    ├─► Domain Layer Tests (Aggregate behavior)
+    │       should_<aggregate_behavior>_when_<condition>
+    │
+    ├─► Application Layer Tests (UseCase flow)
+    │       should_<usecase_result>_when_<command>
+    │
+    ├─► Controller Layer Tests (API contract)
+    │       should_return<status>_when_<scenario>
+    │
+    └─► Repository Layer Tests (Persistence)
+            should_<persist_operation>_when_<condition>
+```
+
+### 5.8 Prohibited Patterns in Tests
+
+- ❌ Conditional logic (if/else) trong test
+- ❌ Loops (for/while) trong test
+- ❌ Shared global state giữa tests
+- ❌ Random values hoặc system time
+- ❌ Test phụ thuộc thứ tự chạy
+- ❌ Mock domain objects
+- ❌ Test implementation details
+
+---
+
+## 6. Common Rules
+
+### 6.1 Công nghệ & dependency
+- **Framework:** Spring Boot 3.x
+- **Java:** 21
+- **Database:** PostgreSQL
+- **ORM:** Spring Data JPA
+- **Migration:** Liquibase
+- **Mapping:** MapStruct
+- **Logging:** SLF4J với `@Slf4j`
+- **Validation:** Jakarta Validation
+- **Documentation:** SpringDoc OpenAPI
+- **Testing:** JUnit 5 + Mockito
+
+### 6.2 External integrations
+- **Keycloak:** dùng SDK `edu-iam-common` (`KeycloakClientService`, `KeycloakUserService`, `KeycloakTokenService`), auto-config sẵn.
+
+### 6.3 Internal SDKs
+- **Danh sách chính:** `cp-ec-common`, `cec-core`, `cec-constant`, `cec-util`, `cec-datasource`, `cec-jpa`, `cec-kafka`, `cec-redis`, ... các adapter khác (`cp-ec-dynamo-adapter`, `cp-ec-elastic-adapter`, `cp-ec-excel`, `fire-base-adapter`, `cp-ec-jdbc-adapter`, `cp-ec-log`, `cp-ec-mongo-adapter`, `cp-ec-monitor`, `cp-ec-security`).
+- **Nguyên tắc:** ưu tiên tái sử dụng utility sẵn có (EntityBase, DefaultSpecification, SearchUtil, Kafka utilities, constants, ...). Import từ `com.sf.base.*` hoặc `com.sf.ec.*`.
+- **Tutorial:** `.aiengine/sdk_tutorial/` chứa hướng dẫn chi tiết → **đọc trước khi áp dụng**:
+  - **`cec-jpa.md`**: EntityBase, DefaultSpecification, SearchUtil, Search annotations (`@Equal`, `@Like`, `@In`, `@Between`, etc.), PageRequestBase, dynamic query building.
+  - **`cec-core.md`**: ResponseUtil, SuccessResponse, exception handling, request/response models.
+  - **`cec-util.md`**: Utility functions, helper classes.
+  - **`cec-kafka.md`**: Kafka producer/consumer utilities, event handling.
+  - **`cec-datasource.md`**: Datasource configuration, connection pooling.
+  - **`cec-constant.md`**: Constants và enums chuẩn.
+  - **`cec-redis.md`**: Redis utilities, caching patterns.
+  - **`tdd-tutorial.md`**: TDD methodology, test patterns, examples → xem [dd/overview/template/tdd-tutorial.md](dd/overview/template/tdd-tutorial.md).
+
+### 6.4 Best practices
+- Áp dụng SOLID (SRP, OCP, LSP, ISP, DIP).
+- DRY, KISS, YAGNI.
+- OWASP best practices.
+- Xử lý lỗi tập trung qua `ServiceExceptionHandler`.
+- Dùng `@Valid` và annotation Jakarta cho mọi request DTO.
+
+---
+
+## 7. Output & Review Expectation
+
+### 7.1 Output format
+- Dùng code block ` ```java ` khi hiển thị code.
+- Có giải thích ngắn gọn sau code.
+- Phải tạo file nguồn thực tế (`.java`).
+- Luôn phản hồi bằng tiếng Việt.
+
+### 7.2 Review rules
+- **Static analysis:** spotbugs, checkstyle.
+- **Review criteria:** Maintainability, Scalability, Readability, SOLID/DRY/KISS/YAGNI compliance, OWASP.
+- **Checklist Layered (khi `DDD=false`):**
+  1. Service interface tồn tại, ServiceImpl implement + `@Service`.
+  2. Inject dependency bằng `@RequiredArgsConstructor`.
+  3. ServiceImpl trả DTO, không trả Entity.
+  4. Đa thao tác DB dùng `@Transactional`.
+  5. Kiểm tra tồn tại qua repository `.orElseThrow()`.
+  6. Controller gọi service interface (không gọi implementation).
+  7. DTO là phương tiện trao đổi dữ liệu.
+  8. Mapper sử dụng MapStruct.
+  9. Search DTO dùng annotation `@Equal/@Like/@In/@Between/...`.
+  10. Search DTO có `PageRequestBase`.
+  11. ServiceImpl search dùng `defaultSpecification.createSpec()`.
+  12. Phân trang bằng `SearchUtil.getPageableFromParam(...)`.
+  13. Controller có `@Tag` mô tả business.
+  14. Từng endpoint có `@Operation` description chi tiết.
+  15. `@ApiResponse` cover toàn bộ status code + bối cảnh.
+  16. DTO có `@Schema` lớp + field (business context).
+  17. Service interface JavaDoc đầy đủ + `@author AI`.
+  18. Mọi class/method AI có JavaDoc chứa `@author AI`.
+  19. Entity không dùng quan hệ JPA.
+  20. Entity chỉ lưu ID primitive/wrapper; join xử lý tại Service layer.
+
+- **Checklist DDD (khi `DDD=true`):**
+  1. Domain aggregate giàu business logic, không setter, method trả `this`, bảo vệ invariants.
+  2. Domain repository port interface ở `domain/{context}/ports/out/repository`, adapter implementation ở `adapters/infrastructure/out/persistence/implement`.
+  3. Application usecase interface ở `application/usecase/{context}`, handler ở `application/usecase/{context}/handler` (`@Service` + `@RequiredArgsConstructor`).
+  4. Domain layer không phụ thuộc infrastructure, không có JPA annotation.
+  5. REST controller tại `adapters/infrastructure/in/rest/controller` inject usecase interface.
+  6. Persistence mapper MapStruct trong `adapters/infrastructure/out/persistence/mapper` chuyển domain model ↔ JPA entity.
+  7. Aggregate enforce consistency, không expose setter.
+  8. Value object immutable.
+  9. JPA entity tại `adapters/infrastructure/out/persistence/entity` không quan hệ JPA.
+  10. JPA entity lưu ID primitive/wrapper, join xử lý tại usecase handler.
+  11. Usecase handler chỉ orchestrate, không gọi trực tiếp sub-domain/port ngoài domain service.
+  12. Command trong `domain/{context}/command`, Query trong `domain/{context}/query`.
+  13. Domain entities trong `domain/{context}/entities` (domain model, không phải JPA).
+  14. Application mapper trong `application/mapper` chuyển request → command.
+  15. Mọi class/method AI có JavaDoc chứa `@author AI`.
+
+---
+
+## 8. Agentic Workflow & AI Integration
+
+### 8.1 BA Agent
+- Input: file requirement `.md` trong `.aiengine/requirement/`.
+- Output: nhiều JSON nhỏ `.ai_output/{module}/business_gen/{module}_{task}_rq.json` + manifest `{module}_manifest.json`.
+- Trách nhiệm: trích entity/field/rule, map service/use case, acceptance criteria, mô tả business rule, quan hệ, chia task nhỏ, tuân template `.aiengine/templates/structured_requirements_template.json`, không tạo file tổng quan lớn.
+
+### 8.2 Dev Agent
+- Đọc manifest để biết thứ tự task.
+- Trước khi code: đọc `java-springboot-gradle-rules.mdc`, xác định kiến trúc, tạo checklist `.ai_output/{module}/dev_gen/{task}_checklist.md` theo review checklist phù hợp.
+- Khi code: với mỗi task phải generate **đầy đủ** (Entity, Repository, Service interface + JavaDoc, ServiceImpl + JavaDoc, DTO request/response `@Schema`, MapStruct mapper, Controller `@RestController` + SpringDoc). Hoàn thành 100% trong một lần, không split API thành nhiều task.
+- Sau khi code: rà checklist, đánh dấu `[x]`, lưu file. Đảm bảo SpringDoc chi tiết, mapping business rule vào logic, đáp ứng acceptance criteria, tuân thủ toàn bộ rule.
+- Prompt tham khảo: `.aiengine/prompts/{module}/code_generation.json` hoặc sample.
+
+### 8.3 QA Agent
+- Input: structured requirements JSON + generated code.
+- Output: test JUnit5 + Mockito trong `src/test/java/`.
+- Nhiệm vụ: unit test services, integration test controllers, map acceptance criteria → test case, tạo test data builders, bảo chứng business rule qua test.
+
+### 8.4 Request/Response format & flow
+- **Input context mong đợi:** `structured_requirements_json`, `business_requirement`, `acceptance_criteria`, `data_schema`, `existing_domain_model`.
+- **Output expectation:** `project_structure`, `source_code`, `unit_tests`, `swagger_documentation`.
+- **Task breakdown:** luôn chia nhỏ, xử lý step-by-step.
+- **Architecture selection:** dựa vào `architecture_mode.domain_driven_design`.
+- **Structured requirements flow:** 
+  1. BA Agent đọc requirement → chia task nhỏ → tạo JSON + manifest.
+  2. Dev Agent theo manifest → implement từng task đầy đủ.
+  3. QA Agent dựa trên JSON + code → tạo test.
+  4. Tất cả agents sử dụng SpringDoc chi tiết để cung cấp bối cảnh cho LLM.
+- **Agentic pattern rules:** 
+  - BA Agent: tách feature lớn thành task độc lập (ví dụ login → rate_limiting_check, mobile_login, internal_login, tenant_login, session_creation, audit_logging), tạo nhiều JSON nhỏ, không file tổng quan.
+  - Dev Agent: mỗi functionality/API phải hoàn chỉnh trong một lần (ví dụ `POST /api/v1/iam/authenticate` → Entity, Repository, Service, DTO, Mapper, Controller). Không split, hoàn thành task hiện tại rồi mới chuyển task mới.
+
+---
+
+## 9. Special Notes
+- Không tạo sample/test data.
+- Luôn phản hồi bằng tiếng Việt.
+- Framework: Spring Boot 3 + Java 21.
+- Ưu tiên `@RequiredArgsConstructor` thay vì field injection; chỉ dùng `@Autowired` nếu user rule bắt buộc.
+- Muốn đổi kiến trúc → chỉnh flag `architecture_mode.domain_driven_design`.
