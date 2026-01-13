@@ -654,11 +654,110 @@ git push origin main
 
 ---
 
-## 11. Xem thêm
+## 11. AI Tools Directory (Phase 4)
+
+### 11.1 Tổng quan
+
+AI Tools Directory là tính năng mới cho phép listing, vote và review các công cụ AI. Khác với Articles (Google Sheets), AI Tools sử dụng **Supabase PostgreSQL** để hỗ trợ:
+- Vote system (1 vote/user/tool)
+- Review system với rating
+- User submissions
+- Complex queries và RLS
+
+### 11.2 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AI TOOLS DIRECTORY (Phase 4)                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐         │
+│   │   /tools     │    │ /tools/[slug]│    │/tools/submit │         │
+│   │   Listing    │    │   Detail     │    │  Submit Form │         │
+│   └──────────────┘    └──────────────┘    └──────────────┘         │
+│          │                   │                    │                 │
+│          ▼                   ▼                    ▼                 │
+│   ┌─────────────────────────────────────────────────────────────┐  │
+│   │                   API Routes (/api/tools/*)                  │  │
+│   │  • GET /api/tools (list)    • POST /api/tools/[slug]/vote   │  │
+│   │  • GET /api/tools/[slug]    • POST /api/tools/submit        │  │
+│   └─────────────────────────────────────────────────────────────┘  │
+│                              │                                      │
+│                              ▼                                      │
+│   ┌─────────────────────────────────────────────────────────────┐  │
+│   │                    SUPABASE POSTGRESQL                       │  │
+│   │  ai_tools | ai_tool_votes | ai_tool_reviews | submissions   │  │
+│   └─────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.3 Database Tables
+
+| Table | Description | Storage |
+|-------|-------------|---------|
+| `ai_tool_categories` | 13 categories (Text Gen, Image Gen, etc.) | Supabase |
+| `ai_tools` | Tool listings với stats | Supabase |
+| `ai_tool_votes` | User votes (1/user/tool) | Supabase |
+| `ai_tool_reviews` | User reviews với rating | Supabase |
+| `ai_tool_submissions` | User submissions | Supabase |
+
+### 11.4 Page Structure
+
+```
+app/
+├── tools/
+│   ├── page.tsx                # /tools - Listing với filter/search/sort
+│   ├── [slug]/
+│   │   └── page.tsx            # /tools/[slug] - Detail + reviews
+│   └── submit/
+│       └── page.tsx            # /tools/submit - Submit form (auth required)
+├── admin/
+│   └── tools/
+│       ├── page.tsx            # Admin tool management
+│       └── submissions/
+│           └── page.tsx        # Review submissions
+```
+
+### 11.5 Components
+
+```
+components/tools/
+├── ToolCard.tsx                # Card trong listing
+├── ToolGrid.tsx                # Grid layout
+├── ToolVoteButton.tsx          # Vote button (requires auth)
+├── ToolRatingStars.tsx         # Star rating display/input
+├── ToolReviewForm.tsx          # Write review form
+├── ToolReviewList.tsx          # List of reviews
+├── ToolCategoryFilter.tsx      # Category filter
+├── ToolSearchInput.tsx         # Search input
+├── ToolSortSelect.tsx          # Sort dropdown
+├── ToolSubmitForm.tsx          # Submit new tool form
+└── ToolPricingBadge.tsx        # Free/Freemium/Paid badge
+```
+
+### 11.6 Dependencies
+
+| Dependency | Required | Description |
+|------------|----------|-------------|
+| US-PF-AUTH | Yes | Vote/Review/Submit requires authentication |
+| Supabase | Yes | PostgreSQL database |
+| user_profile | Yes | User data for votes/reviews |
+
+### 11.7 Chi tiết
+
+Xem thêm:
+- [US-TL-TOOLS.md](../US/US-TL-TOOLS.md) - User Stories
+- [HLD-TL-TOOLS.md](../HLD/MVP.1/HLD-TL-TOOLS.md) - High Level Design
+
+---
+
+## 12. Xem thêm
 
 - [Tech-Stack.md](./Tech-Stack.md) - Chi tiết tech stack v3.0
 - [HLD-DF-DATA-PIPELINE.md](../HLD/MVP.1/HLD-DF-DATA-PIPELINE.md) - Chi tiết Make.com flow
 - [HLD-CF-AI-PROCESSING.md](../HLD/MVP.1/HLD-CF-AI-PROCESSING.md) - Chi tiết Perplexity
+- [HLD-TL-TOOLS.md](../HLD/MVP.1/HLD-TL-TOOLS.md) - Chi tiết AI Tools Directory
 - Make.com: https://www.make.com
 - Google Sheets API: https://developers.google.com/sheets/api
 - Perplexity API: https://docs.perplexity.ai

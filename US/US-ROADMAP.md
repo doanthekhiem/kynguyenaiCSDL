@@ -45,14 +45,22 @@ Tài liệu này sắp xếp thứ tự triển khai các User Story theo **depe
 │   ┌──────────────────────┐          ┌──────────────────────┐               │
 │   │  US-UF-SUBSCRIPTION  │          │  US-PF-AUTH          │               │
 │   │  (Đăng ký Newsletter)│          │  (Xác thực)          │               │
-│   └──────────────────────┘          └──────────────────────┘               │
-│              │                                     │                        │
-│              │         Độc lập với nhau            │                        │
-│              │                                     │                        │
-│   PHASE 4: MONETIZATION (Kiếm tiền)                                         │
-│   ═════════════════════════════════                                         │
-│              │                                     │                        │
-│              └─────────────────┬───────────────────┘                        │
+│   └──────────────────────┘          └──────────┬───────────┘               │
+│              │                                  │                           │
+│              │                                  │                           │
+│   PHASE 4: AI TOOLS DIRECTORY                   │                           │
+│   ═══════════════════════════                   │                           │
+│                                                 ▼                           │
+│                                  ┌──────────────────────┐                   │
+│                                  │  US-TL-TOOLS         │                   │
+│                                  │  (AI Tools Listing)  │◄── Cần Auth      │
+│                                  │  Vote, Review, Submit│                   │
+│                                  └──────────┬───────────┘                   │
+│                                             │                               │
+│   PHASE 5: MONETIZATION (Kiếm tiền)         │                               │
+│   ═════════════════════════════════         │                               │
+│              │                              │                               │
+│              └──────────────────────────────┘                               │
 │                                ▼                                            │
 │                   ┌──────────────────────┐                                  │
 │                   │  US-SF-MONETIZATION  │ ◄─── Cần có traffic trước       │
@@ -132,14 +140,44 @@ Tài liệu này sắp xếp thứ tự triển khai các User Story theo **depe
 
 ---
 
-### PHASE 4: Monetization (Tuần 4-5+)
+### PHASE 4: AI Tools Directory (Tuần 4-5)
+
+> **Mục tiêu:** Xây dựng thư viện công cụ AI với vote và reviews
+
+| STT | User Story | Mô tả | Priority | Dependencies |
+|-----|------------|-------|----------|--------------|
+| 4.1 | **US-TL-TOOLS-001** | Xem danh sách công cụ AI | P0 | Phase 3 (Auth) |
+| 4.2 | **US-TL-TOOLS-002** | Vote cho công cụ AI | P0 | 4.1 + Auth |
+| 4.3 | **US-TL-TOOLS-003** | Viết review công cụ AI | P1 | 4.1 + Auth |
+| 4.4 | **US-TL-TOOLS-004** | Gửi công cụ AI mới | P1 | 4.1 + Auth |
+| 4.5 | **US-TL-TOOLS-005** | Quản lý công cụ AI (Admin) | P0 | 4.1 |
+
+**Lưu ý:**
+- AI Tools sử dụng Supabase PostgreSQL thay vì Google Sheets.
+- Yêu cầu US-PF-AUTH hoàn thành để có vote/review.
+- Database schema đã có trong `supabase/migrations/001_ai_tools_tables.sql`.
+
+**Checklist Phase 4:**
+- [ ] Run database migration
+- [ ] Implement API routes (/api/tools/*)
+- [ ] Build ToolCard, ToolGrid components
+- [ ] Tạo trang /tools (listing)
+- [ ] Tạo trang /tools/[slug] (detail)
+- [ ] Implement vote system
+- [ ] Implement review system
+- [ ] Tạo trang /tools/submit
+- [ ] Build admin pages (/admin/tools/*)
+
+---
+
+### PHASE 5: Monetization (Tuần 6+)
 
 > **Mục tiêu:** Tạo nguồn thu từ website
 
 | STT | User Story | Mô tả | Priority | Dependencies |
 |-----|------------|-------|----------|--------------|
-| 4.1 | **US-SF-MONETIZATION-001** | Affiliate Marketing | P0 | Phase 2 + Traffic |
-| 4.2 | **US-SF-MONETIZATION-002** | Sponsored Tiles | P1 | Phase 2 + Traffic |
+| 5.1 | **US-SF-MONETIZATION-001** | Affiliate Marketing | P0 | Phase 2 + Traffic |
+| 5.2 | **US-SF-MONETIZATION-002** | Sponsored Tiles | P1 | Phase 2 + Traffic |
 
 **Lưu ý:**
 - Chỉ triển khai Monetization SAU KHI có traffic ổn định.
@@ -158,19 +196,19 @@ Tài liệu này sắp xếp thứ tự triển khai các User Story theo **depe
 ## Timeline Tổng quan
 
 ```
-Tuần 1        Tuần 2        Tuần 3        Tuần 4        Tuần 5+
-  │             │             │             │             │
-  ▼             ▼             ▼             ▼             ▼
-┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│ PHASE 1 │ │ PHASE 1 │ │ PHASE 2 │ │ PHASE 3 │ │ PHASE 4 │
-│ Data    │ │ + AI    │ │ Display │ │ Engage  │ │ Revenue │
-│ Pipeline│ │ Process │ │ Content │ │ Users   │ │         │
-└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
-     │           │           │           │           │
-     ▼           ▼           ▼           ▼           ▼
-  Make.com    Perplexity   Bento Grid  Subscribe   Affiliate
-  Gmail       OpenAI       API Routes  Auth(Opt)   Sponsored
-  Sheets      Fallback     ISR Cache   Bookmark
+Tuần 1        Tuần 2        Tuần 3        Tuần 4        Tuần 5        Tuần 6+
+  │             │             │             │             │             │
+  ▼             ▼             ▼             ▼             ▼             ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│ PHASE 1 │ │ PHASE 1 │ │ PHASE 2 │ │ PHASE 3 │ │ PHASE 4 │ │ PHASE 5 │
+│ Data    │ │ + AI    │ │ Display │ │ Engage  │ │ AI Tools│ │ Revenue │
+│ Pipeline│ │ Process │ │ Content │ │ Users   │ │ Dir.    │ │         │
+└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
+     │           │           │           │           │           │
+     ▼           ▼           ▼           ▼           ▼           ▼
+  Make.com    Perplexity   Bento Grid  Subscribe   /tools      Affiliate
+  Gmail       OpenAI       API Routes  Auth        Vote        Sponsored
+  Sheets      Fallback     ISR Cache   Bookmark    Review
 ```
 
 ---
@@ -189,7 +227,8 @@ Tuần 1        Tuần 2        Tuần 3        Tuần 4        Tuần 5+
 ### Tùy chọn (có thể làm sau):
 6. **US-PF-AUTH-001/002/003** - Xác thực và bookmark
 7. **US-DF-DATA-PIPELINE-002** - GitHub Trending
-8. **US-SF-MONETIZATION-001/002** - Kiếm tiền
+8. **US-TL-TOOLS-001/002/003/004/005** - AI Tools Directory
+9. **US-SF-MONETIZATION-001/002** - Kiếm tiền
 
 ---
 
@@ -213,7 +252,10 @@ Tuần 1        Tuần 2        Tuần 3        Tuần 4        Tuần 5+
 | Phase 2 | Lighthouse Performance | >= 90 |
 | Phase 2 | Time to First Contentful Paint | <= 1.5s |
 | Phase 3 | Email subscribers | >= 100 (Phase 2 Newsletter) |
-| Phase 4 | Affiliate CTR | >= 1% |
+| Phase 4 | Số AI Tools trong database | >= 50 |
+| Phase 4 | Tỷ lệ user vote | >= 10% users đăng nhập |
+| Phase 4 | Submissions/tuần | >= 5 |
+| Phase 5 | Affiliate CTR | >= 1% |
 
 ---
 
@@ -224,9 +266,10 @@ Tuần 1        Tuần 2        Tuần 3        Tuần 4        Tuần 5+
 1. **Làm ngay:** Data Pipeline + AI Processing + Article Display
 2. **Làm tiếp:** Subscription Form + Admin Management
 3. **Làm sau:** Authentication + Bookmarks
-4. **Làm khi có traffic:** Monetization
+4. **Làm tiếp theo:** AI Tools Directory (Vote, Review, Submit)
+5. **Làm khi có traffic:** Monetization
 
 **Công thức đơn giản:**
 ```
-Data → Process → Display → Engage → Monetize
+Data → Process → Display → Engage → AI Tools → Monetize
 ```
