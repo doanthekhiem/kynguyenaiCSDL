@@ -1,146 +1,304 @@
-# Kiến trúc Component - KynguyenAI.vn
+# Kiến trúc Component - KynguyenAI.vn (v3.0 - No-Code Automation)
+
+> **Phiên bản**: 3.0
+> **Cập nhật**: 13/01/2026
+> **Thay đổi chính**: Make.com thay Vercel Cron, Google Sheets thay Airtable
+
+---
 
 ## 1. Tổng quan Kiến trúc
 
-### 1.1 Kiến trúc Tổng thể
+### 1.1 Kiến trúc Tổng thể v3.0
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           KYNGUYENAI.VN ARCHITECTURE                             │
+│                     KYNGUYENAI.VN - ARCHITECTURE v3.0                            │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                  │
 │   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │                          FRONTEND LAYER                                  │   │
+│   │                      MAKE.COM (Automation Hub)                           │   │
+│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │   │
+│   │  │Watch Gmail  │→ │Parse Email  │→ │Perplexity   │→ │Save to      │    │   │
+│   │  │(Newsletters)│  │(Extract)    │  │API (Dịch)   │  │Google Sheets│    │   │
+│   │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │   │
+│   │                                                              │          │   │
+│   │                                                              ▼          │   │
+│   │                                                      Webhook to Vercel  │   │
+│   └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+│   ┌─────────────────────────────────────────────────────────────────────────┐   │
+│   │                      GOOGLE SHEETS (Database)                            │   │
+│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                      │   │
+│   │  │  Articles   │  │  GitHub     │  │ Subscribers │                      │   │
+│   │  │  Sheet      │  │  Trending   │  │  Sheet      │                      │   │
+│   │  │ (Unlimited) │  │  (Optional) │  │ (Airtable)  │                      │   │
+│   │  └─────────────┘  └─────────────┘  └─────────────┘                      │   │
+│   └─────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                         │
+│                                        ▼                                         │
+│   ┌─────────────────────────────────────────────────────────────────────────┐   │
+│   │                         VERCEL (Free Tier)                               │   │
 │   │  ┌─────────────────────────────────────────────────────────────────┐    │   │
-│   │  │                      nf-web (Next.js 14/15)                      │    │   │
-│   │  │  - Bento Grid UI (Tailwind + Shadcn)                            │    │   │
-│   │  │  - React Server Components                                       │    │   │
-│   │  │  - ISR (Incremental Static Regeneration)                        │    │   │
-│   │  │  - Dark Mode by default                                         │    │   │
+│   │  │                      Next.js 16 App                              │    │   │
+│   │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │    │   │
+│   │  │  │  Frontend   │  │ API Routes  │  │ Revalidate  │              │    │   │
+│   │  │  │(BentoGrid)  │  │(/api/*)     │  │ Webhook     │              │    │   │
+│   │  │  └─────────────┘  └─────────────┘  └─────────────┘              │    │   │
 │   │  └─────────────────────────────────────────────────────────────────┘    │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-│                                        │                                         │
-│                                        ▼                                         │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │                           BFF LAYER                                      │   │
-│   │  ┌─────────────────────────────────────────────────────────────────┐    │   │
-│   │  │                   nf-graph (Apollo GraphQL)                      │    │   │
-│   │  │  - Query aggregation                                            │    │   │
-│   │  │  - Caching layer                                                │    │   │
-│   │  │  - Rate limiting                                                │    │   │
-│   │  └─────────────────────────────────────────────────────────────────┘    │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-│                                        │                                         │
-│                                        ▼                                         │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │                        BACKEND SERVICES                                  │   │
-│   │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │   │
-│   │  │nf-article  │ │nf-aggreg.  │ │cf-ai-proc  │ │df-pipeline │           │   │
-│   │  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │   │
-│   │  ┌────────────┐ ┌────────────┐ ┌────────────┐                          │   │
-│   │  │uf-subscr.  │ │sf-monetize │ │pf-auth     │                          │   │
-│   │  └────────────┘ └────────────┘ └────────────┘                          │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-│                                        │                                         │
-│                                        ▼                                         │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │                          DATA LAYER                                      │   │
-│   │  ┌─────────────────────────┐    ┌─────────────────────────┐             │   │
-│   │  │  PostgreSQL (Supabase)  │    │    Redis (Queue/Cache)  │             │   │
-│   │  └─────────────────────────┘    └─────────────────────────┘             │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-│                                        │                                         │
-│                                        ▼                                         │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │                       EXTERNAL SERVICES                                  │   │
-│   │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │   │
-│   │  │NewsData.io │ │GitHub API  │ │Gemini API  │ │Resend      │           │   │
-│   │  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │   │
 │   └─────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 Nguyên tắc Thiết kế
+### 1.2 So sánh v2.0 vs v3.0
 
-| Nguyên tắc | Mô tả | Áp dụng |
-|------------|-------|---------|
-| **Simplicity First** | Ưu tiên đơn giản, tránh over-engineering | Monorepo, serverless functions |
-| **Automation** | Tự động hóa tối đa | Cron jobs, AI processing |
-| **Cost Efficiency** | Tối ưu chi phí vận hành | Gemini Flash, Vercel free tier |
-| **Scalability** | Khả năng mở rộng | ISR, Redis queue |
-| **Developer Experience** | Trải nghiệm phát triển tốt | TypeScript, hot reload |
+| Thành phần | v2.0 | v3.0 |
+|------------|------|------|
+| **Automation** | Vercel Cron (code) | **Make.com** (no-code) |
+| **Database** | Airtable (1000 records) | **Google Sheets** (unlimited) |
+| **AI** | Gemini Flash | **Perplexity Sonar** |
+| **Nguồn tin** | NewsData.io API | **Email newsletters** |
+| **Next.js** | 14/15 | **16** (React 19.2) |
+| **Dedup** | URL check | **Hash-based** (url + title) |
+
+### 1.3 Nguyên tắc Thiết kế
+
+| Nguyên tắc | Mô tả | Áp dụng v3.0 |
+|------------|-------|--------------|
+| **No-Code First** | Không cần viết backend | Make.com automation |
+| **Zero Cost** | $0/tháng | All free tiers |
+| **No SQL Required** | Không cần biết SQL | Google Sheets (Excel-like) |
+| **Easy to Scale** | Dễ nâng cấp sau | Sheets → Supabase |
+| **FE Developer Friendly** | Phù hợp FE developer | TypeScript, React 19 |
 
 ---
 
-## 2. Frontend Layer
+## 2. Automation Layer (Make.com)
 
-### 2.1 nf-web - Ứng dụng Web Chính
-
-**Công nghệ:**
-- Next.js 14/15 với App Router
-- React Server Components (RSC)
-- Tailwind CSS + Shadcn UI
-- TypeScript
-
-**Chức năng chính:**
-
-| Module | Mô tả | Route |
-|--------|-------|-------|
-| **Home** | Trang chủ Bento Grid | `/` |
-| **Category** | Danh mục tin tức | `/category/[slug]` |
-| **Article** | Chi tiết bài viết | `/article/[id]` |
-| **Search** | Tìm kiếm | `/search` |
-| **Trending** | GitHub Trending | `/trending` |
-| **Newsletter** | Đăng ký newsletter | `/subscribe` |
-
-**Cấu trúc thư mục:**
+### 2.1 Make.com Workflow
 
 ```
-nf-web/
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         MAKE.COM SCENARIO                                        │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                 │
+│   │   1. WATCH   │      │   2. PARSE   │      │   3. LOOP    │                 │
+│   │    GMAIL     │ ──→  │    EMAIL     │ ──→  │  (Iterator)  │                 │
+│   │  (Trigger)   │      │  (Extract)   │      │              │                 │
+│   └──────────────┘      └──────────────┘      └──────┬───────┘                 │
+│                                                       │                          │
+│                                                       ▼                          │
+│   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                 │
+│   │   4. DEDUP   │      │   5. AI      │      │   6. SAVE    │                 │
+│   │   CHECK      │ ──→  │  PERPLEXITY  │ ──→  │   SHEETS     │                 │
+│   │ (Hash check) │      │ (Translate)  │      │              │                 │
+│   └──────────────┘      └──────────────┘      └──────┬───────┘                 │
+│                                                       │                          │
+│                                                       ▼                          │
+│                                                ┌──────────────┐                 │
+│                                                │  7. WEBHOOK  │                 │
+│                                                │   VERCEL     │                 │
+│                                                │ (Revalidate) │                 │
+│                                                └──────────────┘                 │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Module Chi tiết
+
+| Step | Module | Configuration |
+|------|--------|---------------|
+| 1 | **Watch Gmail** | Filter: From contains "alphasignal" OR "tldr" |
+| 2 | **Text Parser** | Extract: URLs, titles, descriptions from HTML |
+| 3 | **Iterator** | Loop through extracted articles array |
+| 4 | **Google Sheets - Search** | Find by url_hash to check duplicate |
+| 5 | **HTTP - Perplexity** | POST to /chat/completions |
+| 6 | **Google Sheets - Add Row** | Append article data |
+| 7 | **HTTP - Webhook** | POST to /api/revalidate |
+
+### 2.3 Deduplication Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         DEDUP FLOW IN MAKE.COM                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   Input URL: https://techcrunch.com/ai-news?utm_source=newsletter               │
+│                                                                                  │
+│   Step 1: Normalize URL                                                         │
+│   ┌─────────────────────────────────────────────────────────────────────────┐   │
+│   │  Remove: ?utm_source, ?utm_medium, ?ref, ?source                        │   │
+│   │  Lowercase: techcrunch.com/ai-news                                      │   │
+│   │  Remove trailing slash                                                  │   │
+│   │  Output: https://techcrunch.com/ai-news                                 │   │
+│   └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+│   Step 2: Generate Hash                                                         │
+│   ┌─────────────────────────────────────────────────────────────────────────┐   │
+│   │  url_hash = MD5(normalized_url)                                         │   │
+│   │  title_hash = MD5(lowercase(title))                                     │   │
+│   └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+│   Step 3: Search in Google Sheets                                               │
+│   ┌─────────────────────────────────────────────────────────────────────────┐   │
+│   │  IF url_hash exists OR title_hash exists                                │   │
+│   │     → SKIP (Router → Stop)                                              │   │
+│   │  ELSE                                                                   │   │
+│   │     → CONTINUE (→ Perplexity → Save)                                    │   │
+│   └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.4 Email Sources
+
+| Newsletter | Email From | Frequency | Content |
+|------------|------------|-----------|---------|
+| **AlphaSignal** | newsletter@alphasignal.ai | Daily | AI research |
+| **TLDR AI** | dan@tldrnewsletter.com | Daily | AI digest |
+| **The Rundown AI** | team@therundown.ai | Daily | AI news |
+| **Import AI** | jack@importai.net | Weekly | AI deep dives |
+| **AI Breakfast** | hi@aibreakfast.beehiiv.com | Daily | AI summary |
+
+---
+
+## 3. Data Layer (Google Sheets)
+
+### 3.1 Tại sao Google Sheets thay Airtable?
+
+| Tiêu chí | Google Sheets | Airtable |
+|----------|---------------|----------|
+| **Free records** | **Unlimited** | 1,000 |
+| **UI quen thuộc** | Excel-like (familiar) | Xuất sắc |
+| **Make.com** | Native integration | Native integration |
+| **API** | Google Sheets API | REST API |
+| **Collaboration** | Google Workspace | Limited |
+
+### 3.2 Schema: Sheet "Articles"
+
+| Column | Name | Type | Mô tả |
+|--------|------|------|-------|
+| A | id | Text | UUID auto-generated |
+| B | url_hash | Text | MD5 hash cho dedup |
+| C | title_hash | Text | MD5 hash cho dedup |
+| D | title_vi | Text | Tiêu đề tiếng Việt |
+| E | summary_vi | Text | Tóm tắt tiếng Việt |
+| F | original_url | URL | Link bài gốc |
+| G | thumbnail | URL | Ảnh thumbnail |
+| H | category | Text | AI Tools / AI News / AI Tutorial |
+| I | source | Text | AlphaSignal / TLDR AI |
+| J | published_at | Date | Ngày publish |
+| K | tile_size | Text | hero / tall / standard |
+| L | is_featured | Boolean | TRUE / FALSE |
+| M | status | Text | draft / published |
+| N | created_at | Date | Ngày tạo |
+
+### 3.3 Schema: Sheet "GitHub_Trending" (Optional)
+
+| Column | Name | Type | Mô tả |
+|--------|------|------|-------|
+| A | repo_name | Text | owner/repo |
+| B | url | URL | GitHub URL |
+| C | description_vi | Text | Mô tả tiếng Việt |
+| D | stars | Number | Số stars |
+| E | language | Text | Python / JavaScript |
+| F | trending_date | Date | Ngày trending |
+
+### 3.4 Schema: Airtable "Subscribers" (Giữ nguyên)
+
+Subscribers vẫn dùng Airtable vì:
+- Cần UI đẹp để quản lý
+- Số lượng ít (<1000)
+- Không cần unlimited
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| email | Email | Email subscriber |
+| status | Single select | pending / confirmed |
+| subscribed_at | Date | Ngày đăng ký |
+
+---
+
+## 4. Frontend Layer (Next.js 16)
+
+### 4.1 Next.js 16 Features
+
+**Tính năng mới (Released Oct 2025):**
+- **React 19.2** - View Transitions, `useEffectEvent()`, Activity component
+- **Turbopack** - Default bundler (2-5x faster builds, 10x faster Fast Refresh)
+- **React Compiler** - Automatic memoization (stable)
+- **Cache Components** - Opt-in caching với `"use cache"` directive
+- **DevTools MCP** - AI-assisted debugging
+- **`proxy.ts`** - Thay thế `middleware.ts` cho network boundary
+
+**Breaking Changes:**
+- Node.js 20.9+ required
+- Async `params`, `searchParams`, `cookies()`, `headers()`
+- Turbopack là default bundler
+
+### 4.2 Cấu trúc thư mục
+
+```
+kynguyenai-web/
 ├── app/
-│   ├── layout.tsx
-│   ├── page.tsx                    # Home - Bento Grid
-│   ├── category/[slug]/page.tsx
-│   ├── article/[id]/page.tsx
-│   ├── search/page.tsx
-│   ├── trending/page.tsx
-│   └── subscribe/page.tsx
+│   ├── layout.tsx              # Root layout
+│   ├── page.tsx                # Trang chủ - Bento Grid
+│   ├── category/
+│   │   └── [slug]/
+│   │       └── page.tsx        # Danh mục tin theo category
+│   ├── article/
+│   │   └── [id]/
+│   │       └── page.tsx        # Chi tiết bài viết
+│   └── api/
+│       ├── articles/
+│       │   └── route.ts        # GET articles từ Google Sheets
+│       ├── revalidate/
+│       │   └── route.ts        # Webhook từ Make.com
+│       └── subscribe/
+│           └── route.ts        # POST subscribe (→ Airtable)
 ├── components/
-│   ├── bento/
+│   ├── bento/                  # Từ bentogrids.com
 │   │   ├── BentoGrid.tsx
-│   │   ├── HeroTile.tsx           # 2x2 tile
-│   │   ├── TallTile.tsx           # 1x2 tile
-│   │   ├── StandardTile.tsx       # 1x1 tile
-│   │   └── SponsoredTile.tsx      # Native ads
+│   │   ├── HeroTile.tsx
+│   │   ├── TallTile.tsx
+│   │   └── StandardTile.tsx
 │   ├── article/
 │   │   ├── ArticleCard.tsx
-│   │   ├── ArticleDetail.tsx
-│   │   └── ArticleList.tsx
-│   ├── github/
-│   │   └── TrendingList.tsx
-│   └── ui/                         # Shadcn components
+│   │   └── ArticleDetail.tsx
+│   └── ui/                     # Shadcn components
 ├── lib/
-│   ├── api.ts                      # GraphQL client
-│   └── utils.ts
-└── styles/
-    └── globals.css
+│   ├── sheets.ts               # Google Sheets client
+│   ├── airtable.ts             # Airtable client (subscribers only)
+│   └── perplexity.ts           # Perplexity client (optional)
+├── types/
+│   └── index.ts
+├── .env.local
+└── package.json
 ```
 
-### 2.2 Bento Grid Layout
+### 4.3 API Routes
+
+| Endpoint | Method | Data Source | Mô tả |
+|----------|--------|-------------|-------|
+| `/api/articles` | GET | Google Sheets | Lấy danh sách bài viết |
+| `/api/articles?category=ai-tools` | GET | Google Sheets | Lấy theo category |
+| `/api/revalidate` | POST | - | Webhook từ Make.com |
+| `/api/subscribe` | POST | Airtable | Đăng ký newsletter |
+
+### 4.4 Bento Grid Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         BENTO GRID LAYOUT                            │
+│                     BENTO GRID (bentogrids.com)                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │   Desktop (4 columns)                                                │
 │   ┌────────────────────────┬──────────────┬──────────────┐          │
 │   │                        │              │              │          │
-│   │      HERO ARTICLE      │   TRENDING   │   AI TOOL    │          │
-│   │        (2x2)           │   GITHUB     │   OF THE     │          │
-│   │     (Tin AI nổi bật)   │    (1x2)     │    DAY       │          │
-│   │                        │   (AI/ML)    │   (1x1)      │          │
+│   │      HERO ARTICLE      │   AI TOOL    │   AI NEWS    │          │
+│   │        (2x2)           │   OF DAY     │   (1x1)      │          │
+│   │     (Tin AI hot)       │   (1x2)      │              │          │
 │   │                        │              ├──────────────┤          │
 │   │                        │              │  SPONSORED   │          │
 │   │                        │              │   (1x1)      │          │
@@ -150,477 +308,358 @@ nf-web/
 │   │   (1x1)      │   (1x1)      │   (1x1)      │   (1x1)      │     │
 │   └──────────────┴──────────────┴──────────────┴──────────────┘     │
 │                                                                      │
-│   Mobile (1 column - stacked)                                        │
-│   ┌──────────────────────────────────────────────────────────┐      │
-│   │                      HERO ARTICLE                         │      │
-│   ├──────────────────────────────────────────────────────────┤      │
-│   │                  TRENDING GITHUB (AI/ML)                  │      │
-│   ├──────────────────────────────────────────────────────────┤      │
-│   │                      AI TOOL OF THE DAY                   │      │
-│   ├──────────────────────────────────────────────────────────┤      │
-│   │                      AI NEWS / TUTORIAL                   │      │
-│   └──────────────────────────────────────────────────────────┘      │
+│   CSS Grid Implementation:                                           │
+│   grid-template-columns: repeat(4, 1fr)                             │
+│   auto-rows: 200px                                                   │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Tile Types:**
+### 4.5 Tile Types
 
-| Tile | Size | CSS Class | Nội dung |
-|------|------|-----------|----------|
-| **Hero** | 2x2 | `col-span-2 row-span-2` | Breaking AI news, tin AI nổi bật |
-| **Tall** | 1x2 | `col-span-1 row-span-2` | Danh sách cuộn (GitHub AI trending) |
-| **Standard** | 1x1 | `col-span-1 row-span-1` | Tin AI theo category |
-| **Wide** | 2x1 | `col-span-2 row-span-1` | Banner, sponsored AI tools |
-
----
-
-## 3. BFF Layer
-
-### 3.1 nf-graph - GraphQL Gateway
-
-**Công nghệ:**
-- Apollo Server
-- GraphQL
-- TypeScript
-
-**Schema chính:**
-
-```graphql
-# Types
-type Article {
-  id: ID!
-  titleVi: String!
-  summaryVi: String
-  originalUrl: String!
-  thumbnailUrl: String
-  category: Category!
-  tags: [Tag!]!
-  source: Source!
-  publishedAt: DateTime!
-  tileSize: TileSize!
-  isFeatured: Boolean!
-}
-
-type GitHubRepo {
-  id: ID!
-  fullName: String!
-  url: String!
-  description: String
-  descriptionVi: String
-  language: String
-  starsCount: Int!
-  starsToday: Int
-  trendingRank: Int
-}
-
-type Category {
-  id: ID!
-  name: String!
-  slug: String!
-}
-
-type Source {
-  id: ID!
-  name: String!
-  url: String!
-}
-
-enum TileSize {
-  HERO      # 2x2
-  TALL      # 1x2
-  STANDARD  # 1x1
-  WIDE      # 2x1
-}
-
-# Queries
-type Query {
-  # Home page content
-  featuredArticles(limit: Int = 10): [Article!]!
-  latestArticles(limit: Int = 20, offset: Int = 0): ArticleConnection!
-
-  # Category
-  articlesByCategory(
-    categorySlug: String!
-    limit: Int = 20
-    offset: Int = 0
-  ): ArticleConnection!
-
-  # Single article
-  article(id: ID!): Article
-
-  # GitHub
-  trendingGitHubRepos(
-    language: String
-    limit: Int = 10
-  ): [GitHubRepo!]!
-
-  # Search
-  searchArticles(query: String!, limit: Int = 20): [Article!]!
-
-  # Categories
-  categories: [Category!]!
-}
-
-# Mutations
-type Mutation {
-  subscribeNewsletter(email: String!): SubscriptionResult!
-  confirmSubscription(token: String!): SubscriptionResult!
-  unsubscribe(token: String!): SubscriptionResult!
-}
-
-# Pagination
-type ArticleConnection {
-  edges: [ArticleEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type ArticleEdge {
-  node: Article!
-  cursor: String!
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
-}
-```
+| Tile | CSS Class | Grid Span | Use Case |
+|------|-----------|-----------|----------|
+| **Hero** | `col-span-2 row-span-2` | 2x2 | Breaking news |
+| **Tall** | `row-span-2` | 1x2 | GitHub trending |
+| **Standard** | (default) | 1x1 | Regular articles |
+| **Wide** | `col-span-2` | 2x1 | Banners |
 
 ---
 
-## 4. Backend Services
+## 5. AI Processing (Perplexity)
 
-### 4.1 Tổng quan Services
-
-| Service | Prefix | Stack | Chức năng |
-|---------|--------|-------|-----------|
-| **nf-article** | NF | Node.js/TS | CRUD bài viết, phân loại |
-| **nf-aggregation** | NF | Node.js/TS | Thu thập tin từ API ngoài |
-| **cf-ai-processor** | CF | Node.js/TS | Xử lý AI (tóm tắt, dịch) |
-| **df-data-pipeline** | DF | Node.js/TS | Pipeline ETL, cron jobs |
-| **uf-subscription** | UF | Node.js/TS | Newsletter, email |
-| **sf-monetization** | SF | Node.js/TS | Affiliate, sponsored |
-| **pf-auth** | PF | Node.js/TS | Xác thực (tùy chọn) |
-
-### 4.2 nf-article - Quản lý Bài viết
-
-```
-nf-article/
-├── src/
-│   ├── controllers/
-│   │   ├── article.controller.ts
-│   │   └── category.controller.ts
-│   ├── services/
-│   │   ├── article.service.ts
-│   │   └── category.service.ts
-│   ├── repositories/
-│   │   ├── article.repository.ts
-│   │   └── category.repository.ts
-│   ├── models/
-│   │   ├── article.model.ts
-│   │   ├── category.model.ts
-│   │   └── tag.model.ts
-│   └── events/
-│       ├── article.events.ts
-│       └── publishers/
-└── package.json
-```
-
-**Responsibilities:**
-- CRUD operations cho articles
-- Quản lý categories và tags
-- Phát events khi article thay đổi trạng thái
-
-### 4.3 nf-aggregation - Thu thập Dữ liệu
-
-```
-nf-aggregation/
-├── src/
-│   ├── providers/
-│   │   ├── newsdata.provider.ts      # NewsData.io
-│   │   ├── github.provider.ts        # GitHub API
-│   │   └── base.provider.ts
-│   ├── services/
-│   │   ├── aggregation.service.ts
-│   │   └── deduplication.service.ts
-│   ├── filters/
-│   │   ├── relevance.filter.ts
-│   │   └── spam.filter.ts
-│   └── scheduler/
-│       └── cron.scheduler.ts
-└── package.json
-```
-
-**Responsibilities:**
-- Fetch dữ liệu từ NewsData.io
-- Fetch GitHub trending repos
-- Lọc và deduplicate
-- Push vào Redis queue
-
-### 4.4 cf-ai-processor - Xử lý AI
-
-```
-cf-ai-processor/
-├── src/
-│   ├── providers/
-│   │   ├── gemini.provider.ts        # Primary
-│   │   └── openai.provider.ts        # Fallback
-│   ├── services/
-│   │   ├── summarization.service.ts
-│   │   ├── translation.service.ts
-│   │   └── categorization.service.ts
-│   ├── prompts/
-│   │   ├── summarize.prompt.ts
-│   │   ├── translate.prompt.ts
-│   │   └── categorize.prompt.ts
-│   └── workers/
-│       └── queue.worker.ts
-└── package.json
-```
-
-**Responsibilities:**
-- Tóm tắt nội dung bằng Gemini/GPT
-- Dịch sang tiếng Việt (giữ thuật ngữ AI: LLM, GPT, Transformer, Fine-tuning...)
-- Phân loại tự động vào 4 categories: AI Tools, AI News, AI Tutorial, AI Vietnam
-- Quản lý token usage và chi phí
-
-### 4.5 df-data-pipeline - Pipeline Dữ liệu
-
-```
-df-data-pipeline/
-├── src/
-│   ├── orchestrator/
-│   │   └── pipeline.orchestrator.ts
-│   ├── stages/
-│   │   ├── fetch.stage.ts
-│   │   ├── filter.stage.ts
-│   │   ├── process.stage.ts
-│   │   ├── store.stage.ts
-│   │   └── publish.stage.ts
-│   ├── schedulers/
-│   │   └── cron.config.ts
-│   └── monitors/
-│       └── health.monitor.ts
-└── package.json
-```
-
-**Responsibilities:**
-- Orchestrate toàn bộ pipeline
-- Schedule cron jobs (15 phút/lần)
-- Monitor pipeline health
-- Trigger ISR revalidation
-
-### 4.6 uf-subscription - Newsletter
-
-```
-uf-subscription/
-├── src/
-│   ├── services/
-│   │   ├── subscription.service.ts
-│   │   └── newsletter.service.ts
-│   ├── templates/
-│   │   ├── welcome.template.ts
-│   │   ├── weekly.template.ts
-│   │   └── confirm.template.ts
-│   └── workers/
-│       └── email.worker.ts
-└── package.json
-```
-
-**Responsibilities:**
-- Quản lý subscribers
-- Gửi email confirmation
-- Generate và gửi weekly newsletter
-- Handle unsubscribe
-
-### 4.7 sf-monetization - Kiếm tiền
-
-```
-sf-monetization/
-├── src/
-│   ├── services/
-│   │   ├── affiliate.service.ts
-│   │   └── sponsored.service.ts
-│   ├── models/
-│   │   ├── affiliate-link.model.ts
-│   │   └── sponsored-tile.model.ts
-│   └── analytics/
-│       └── click.tracker.ts
-└── package.json
-```
-
-**Responsibilities:**
-- Quản lý affiliate links
-- Quản lý sponsored tiles
-- Track clicks và conversions
-- Generate reports
-
----
-
-## 5. Data Layer
-
-### 5.1 PostgreSQL (Supabase)
-
-**Schemas:**
-
-| Schema | Mô tả | Tables |
-|--------|-------|--------|
-| `nf` | News Foundation | article, category, tag, source |
-| `cf` | Content Foundation | ai_job, prompt_template |
-| `uf` | User Foundation | subscriber, preference |
-| `sf` | Store Foundation | affiliate_link, sponsored_tile, click_event |
-
-### 5.2 Redis
-
-**Use cases:**
-
-| Key Pattern | Purpose | TTL |
-|-------------|---------|-----|
-| `queue:processing` | Processing queue | - |
-| `queue:failed` | Failed jobs (DLQ) | 7 days |
-| `cache:article:{id}` | Article cache | 5 min |
-| `cache:trending` | GitHub trending cache | 1 hour |
-| `rate:{ip}` | Rate limiting | 1 min |
-
----
-
-## 6. External Services
-
-### 6.1 Tích hợp API
-
-| Service | Purpose | Rate Limit | Cost |
-|---------|---------|------------|------|
-| **NewsData.io** | News aggregation | 200 req/day (free) | $0-79/mo |
-| **GitHub API** | Trending repos | 5000 req/hour | Free |
-| **Gemini Flash 1.5** | AI processing | - | ~$0.075/1M tokens |
-| **OpenAI GPT-4o-mini** | Fallback AI | - | ~$0.15/1M tokens |
-| **Resend** | Email delivery | 100/day (free) | $0-20/mo |
-
-### 6.2 Integration Diagram
+### 5.1 Integration Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     EXTERNAL INTEGRATIONS                            │
+│                  PERPLEXITY API (IN MAKE.COM)                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│   ┌─────────────┐         ┌─────────────┐         ┌─────────────┐   │
-│   │ NewsData.io │         │ GitHub API  │         │ Resend      │   │
-│   │             │         │             │         │             │   │
-│   │ - /news     │         │ - /trending │         │ - /emails   │   │
-│   │ - /sources  │         │ - /repos    │         │ - /domains  │   │
-│   └──────┬──────┘         └──────┬──────┘         └──────┬──────┘   │
-│          │                       │                       │          │
-│          └───────────────┬───────┴───────────────────────┘          │
-│                          │                                          │
-│                          ▼                                          │
-│          ┌───────────────────────────────┐                          │
-│          │      nf-aggregation           │                          │
-│          │      df-data-pipeline         │                          │
-│          └───────────────┬───────────────┘                          │
-│                          │                                          │
-│                          ▼                                          │
-│   ┌─────────────┐    ┌─────────────┐                               │
-│   │ Gemini API  │    │ OpenAI API  │                               │
-│   │             │    │             │                               │
-│   │ - /generate │    │ - /chat     │                               │
-│   │   (primary) │    │  (fallback) │                               │
-│   └──────┬──────┘    └──────┬──────┘                               │
-│          │                  │                                       │
-│          └────────┬─────────┘                                       │
-│                   │                                                 │
-│                   ▼                                                 │
-│          ┌───────────────────────────────┐                          │
-│          │      cf-ai-processor          │                          │
-│          └───────────────────────────────┘                          │
+│   HTTP Module Configuration:                                         │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  URL: https://api.perplexity.ai/chat/completions            │   │
+│   │  Method: POST                                                │   │
+│   │  Headers:                                                    │   │
+│   │    Authorization: Bearer {{PERPLEXITY_API_KEY}}             │   │
+│   │    Content-Type: application/json                           │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│   Request Body:                                                      │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  {                                                           │   │
+│   │    "model": "sonar",                                        │   │
+│   │    "messages": [                                            │   │
+│   │      {                                                      │   │
+│   │        "role": "system",                                    │   │
+│   │        "content": "Bạn là Biên tập viên AI. Dịch và tóm tắt│   │
+│   │                    sang tiếng Việt. Giữ thuật ngữ AI."     │   │
+│   │      },                                                     │   │
+│   │      {                                                      │   │
+│   │        "role": "user",                                      │   │
+│   │        "content": "Title: {{title}}\nContent: {{content}}" │   │
+│   │      }                                                      │   │
+│   │    ],                                                       │   │
+│   │    "temperature": 0.3                                       │   │
+│   │  }                                                          │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│   Response Parsing:                                                  │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  title_vi = {{response.choices[0].message.content.title_vi}}│   │
+│   │  summary_vi = {{response.choices[0].message.content...}}    │   │
+│   │  category = {{response.choices[0].message.content.category}}│   │
+│   └─────────────────────────────────────────────────────────────┘   │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 Prompt Template
+
+```
+Bạn là Biên tập viên AI chuyên nghiệp. Nhiệm vụ:
+
+1. Dịch tiêu đề sang tiếng Việt (tự nhiên, hấp dẫn)
+2. Tóm tắt nội dung thành 2-3 câu tiếng Việt
+3. Phân loại vào 1 trong 4 category: AI Tools, AI News, AI Tutorial, AI Vietnam
+
+QUAN TRỌNG: Giữ nguyên thuật ngữ AI:
+- LLM, GPT, Transformer, Fine-tuning
+- Prompt Engineering, RAG, Vector Database
+- Machine Learning, Deep Learning, Neural Network
+
+Input:
+Title: {{title}}
+Content: {{content}}
+
+Output JSON:
+{
+  "title_vi": "...",
+  "summary_vi": "...",
+  "category": "AI Tools | AI News | AI Tutorial | AI Vietnam"
+}
 ```
 
 ---
 
-## 7. Deployment Architecture
+## 6. Deployment
 
-### 7.1 Vercel Deployment
+### 6.1 Vercel Configuration
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      VERCEL DEPLOYMENT                               │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│   ┌─────────────────────────────────────────────────────────────┐   │
-│   │                    CDN (Edge Network)                        │   │
-│   │  - Static assets                                            │   │
-│   │  - ISR cached pages                                         │   │
-│   └─────────────────────────────────────────────────────────────┘   │
-│                              │                                       │
-│                              ▼                                       │
-│   ┌─────────────────────────────────────────────────────────────┐   │
-│   │                 Serverless Functions                         │   │
-│   │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │   │
-│   │  │ nf-graph    │ │ API routes  │ │ Cron jobs   │            │   │
-│   │  │ (GraphQL)   │ │ (REST)      │ │ (scheduled) │            │   │
-│   │  └─────────────┘ └─────────────┘ └─────────────┘            │   │
-│   └─────────────────────────────────────────────────────────────┘   │
-│                              │                                       │
-│                              ▼                                       │
-│   ┌─────────────────────────────────────────────────────────────┐   │
-│   │                   External Services                          │   │
-│   │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │   │
-│   │  │ Supabase    │ │ Upstash     │ │ External    │            │   │
-│   │  │ (Postgres)  │ │ (Redis)     │ │ APIs        │            │   │
-│   │  └─────────────┘ └─────────────┘ └─────────────┘            │   │
-│   └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+```json
+// vercel.json
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "devCommand": "next dev --turbo",
+  "installCommand": "npm install"
+}
 ```
 
-### 7.2 ISR Configuration
+**LƯU Ý:** Không cần cron configuration vì Make.com xử lý automation.
+
+### 6.2 ISR Configuration
 
 ```typescript
-// next.config.js
-export default {
-  experimental: {
-    isrMemoryCacheSize: 50 * 1024 * 1024, // 50MB
-  },
-}
-
 // app/page.tsx
-export const revalidate = 300 // 5 minutes
+export const revalidate = 300 // 5 minutes fallback
 
-// app/article/[id]/page.tsx
-export const revalidate = 3600 // 1 hour
+// On-demand revalidation via webhook
+// app/api/revalidate/route.ts
+import { revalidatePath } from 'next/cache'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(request: NextRequest) {
+  const secret = request.headers.get('x-revalidate-secret')
+
+  if (secret !== process.env.REVALIDATE_SECRET) {
+    return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
+  }
+
+  // Revalidate pages
+  revalidatePath('/')
+  revalidatePath('/category/[slug]', 'page')
+
+  return NextResponse.json({ revalidated: true, time: Date.now() })
+}
+```
+
+### 6.3 Environment Variables
+
+```bash
+# .env.local
+
+# Google Sheets
+GOOGLE_SERVICE_ACCOUNT={"type":"service_account",...}
+GOOGLE_SHEETS_ID=1xxxxxxxxxxxxxxxx
+
+# Airtable (for subscribers)
+AIRTABLE_API_KEY=pat_xxxxxxxxxxxx
+AIRTABLE_BASE_ID=appxxxxxxxxxxxx
+
+# Revalidation
+REVALIDATE_SECRET=your-random-secret
+
+# App
+NEXT_PUBLIC_APP_URL=https://kynguyenai.vn
+```
+
+### 6.4 Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      DEPLOYMENT ARCHITECTURE v3.0                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   EMAIL NEWSLETTERS                                                  │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  AlphaSignal | TLDR AI | The Rundown AI | Import AI         │   │
+│   └──────────────────────────────┬──────────────────────────────┘   │
+│                                  │                                   │
+│                                  ▼                                   │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │                    MAKE.COM (Free Tier)                      │   │
+│   │  • Watch Gmail (trigger)                                    │   │
+│   │  • Parse email (extract articles)                           │   │
+│   │  • HTTP → Perplexity (translate)                           │   │
+│   │  • Google Sheets (save)                                     │   │
+│   │  • Webhook → Vercel (revalidate)                           │   │
+│   └──────────────────────────────┬──────────────────────────────┘   │
+│                                  │                                   │
+│              ┌───────────────────┼───────────────────┐              │
+│              │                   │                   │              │
+│              ▼                   ▼                   ▼              │
+│   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │
+│   │  GOOGLE SHEETS   │  │    PERPLEXITY    │  │      VERCEL      │ │
+│   │   (Database)     │  │      (AI)        │  │   (Next.js 16)   │ │
+│   │   Unlimited      │  │   $5 free/mo     │  │   Free Tier      │ │
+│   └──────────────────┘  └──────────────────┘  └──────────────────┘ │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 8. Monitoring và Observability
+## 7. Chi phí Ước tính
 
-### 8.1 Metrics
+### 7.1 v3.0: $0/tháng
 
-| Metric | Tool | Alert Threshold |
-|--------|------|-----------------|
-| Response time | Vercel Analytics | > 3s |
-| Error rate | Sentry | > 1% |
-| Pipeline success | Custom | < 90% |
-| API quota usage | Custom | > 80% |
-| Cost per day | Custom | > $5 |
+| Service | Free Tier | Sử dụng dự kiến | Chi phí |
+|---------|-----------|-----------------|---------|
+| **Vercel** | 100k requests | ~50k requests | $0 |
+| **Google Sheets** | Unlimited | ~900 records/tháng | $0 |
+| **Make.com** | 1000 ops/month | ~900 ops/tháng | $0 |
+| **Perplexity** | $5 credits (Pro) | ~$4.50/tháng | $0* |
+| **Airtable** | 1000 records | ~100 subscribers | $0 |
+| **TOTAL** | | | **$0/tháng** |
 
-### 8.2 Logging
+*Perplexity: Cần Pro subscription ($20/tháng) cho $5 credits, hoặc pay-as-you-go (~$4.50/tháng)
+
+### 7.2 So sánh chi phí v2.0 vs v3.0
+
+| | v2.0 | v3.0 |
+|---|------|------|
+| Database | Airtable Free (1000 records) | Google Sheets (Unlimited) |
+| AI | Gemini (~$2-5/tháng) | Perplexity ($0-5/tháng) |
+| Automation | Vercel Cron (free) | Make.com (free) |
+| **Total** | **$0-5/tháng** | **$0/tháng** |
+
+---
+
+## 8. TypeScript Types
+
+```typescript
+// types/index.ts
+
+export interface Article {
+  id: string
+  url_hash: string
+  title_hash: string
+  title_vi: string
+  summary_vi: string
+  original_url: string
+  thumbnail?: string
+  category: 'AI Tools' | 'AI News' | 'AI Tutorial' | 'AI Vietnam'
+  source: string
+  published_at: string
+  tile_size: 'hero' | 'tall' | 'standard' | 'wide'
+  is_featured: boolean
+  status: 'draft' | 'published'
+  created_at: string
+}
+
+export interface GitHubRepo {
+  repo_name: string
+  url: string
+  description_vi: string
+  stars: number
+  language: string
+  trending_date: string
+}
+
+export interface Subscriber {
+  id: string
+  email: string
+  status: 'pending' | 'confirmed'
+  subscribed_at: string
+}
+```
+
+---
+
+## 9. Migration Path
+
+### 9.1 Google Sheets → Supabase
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      LOGGING ARCHITECTURE                            │
+│                         MIGRATION PATH                               │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│   Application Logs ────► Vercel Logs ────► Log Drain (optional)     │
-│                                                                      │
-│   Error Tracking ──────► Sentry                                     │
-│                                                                      │
-│   Analytics ───────────► Vercel Analytics                           │
-│                          PostHog (optional)                         │
+│   Phase 1 (Hiện tại): Google Sheets + Make.com                      │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  Chi phí: $0/tháng                                          │   │
+│   │  Giới hạn: API rate limits, no SQL queries                  │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│   Phase 2: Supabase + Make.com (khi cần SQL)                        │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  Migrate: Download CSV → Import Supabase                    │   │
+│   │  Update: lib/sheets.ts → lib/supabase.ts                   │   │
+│   │  Chi phí: $0 (Supabase free tier)                          │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│   Phase 3: Full Stack (khi cần real-time, auth)                     │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  Add: Upstash Redis (caching)                               │   │
+│   │  Add: Supabase Auth                                         │   │
+│   │  Chi phí: ~$20-50/tháng                                     │   │
+│   └─────────────────────────────────────────────────────────────┘   │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+### 9.2 Make.com → Vercel Cron (nếu cần)
+
+Khi cần control nhiều hơn:
+1. Viết cron job trong `/api/cron/route.ts`
+2. Add Vercel Cron config
+3. Migrate logic từ Make.com sang code
+
+---
+
+## 10. Setup Guide
+
+### 10.1 Setup Make.com (15 phút)
+
+1. Đăng ký tại [make.com](https://www.make.com)
+2. Tạo Scenario mới
+3. Add modules:
+   - Gmail → Watch emails
+   - Text Parser → Extract from HTML
+   - Iterator → Loop articles
+   - Google Sheets → Search rows (dedup)
+   - HTTP → Perplexity API
+   - Google Sheets → Add row
+   - HTTP → Webhook to Vercel
+4. Configure filters và connections
+5. Enable scenario
+
+### 10.2 Setup Google Sheets (5 phút)
+
+1. Tạo Google Sheet mới
+2. Tạo sheet "Articles" với columns A-N theo schema
+3. Enable Google Sheets API trong Google Cloud Console
+4. Tạo Service Account
+5. Share Sheet với Service Account email
+
+### 10.3 Deploy Next.js (10 phút)
+
+```bash
+# Create project (Next.js 16)
+npx create-next-app@latest kynguyenai-web --typescript --tailwind --app
+
+# Install dependencies
+cd kynguyenai-web
+npm install googleapis
+
+# Add environment variables
+# Copy .env.local
+
+# Deploy to Vercel
+git push origin main
+# Import in Vercel Dashboard
+```
+
+---
+
+## 11. Xem thêm
+
+- [Tech-Stack.md](./Tech-Stack.md) - Chi tiết tech stack v3.0
+- [HLD-DF-DATA-PIPELINE.md](../HLD/MVP.1/HLD-DF-DATA-PIPELINE.md) - Chi tiết Make.com flow
+- [HLD-CF-AI-PROCESSING.md](../HLD/MVP.1/HLD-CF-AI-PROCESSING.md) - Chi tiết Perplexity
+- Make.com: https://www.make.com
+- Google Sheets API: https://developers.google.com/sheets/api
+- Perplexity API: https://docs.perplexity.ai
+- BentoGrids: https://bentogrids.com
