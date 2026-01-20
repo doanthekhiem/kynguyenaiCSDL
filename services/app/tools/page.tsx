@@ -4,7 +4,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToolGrid } from "@/components/tools/ToolGrid";
-import { getMockTools, mockToolCategories } from "@/lib/mockdata";
+import { getToolsList, getCategories } from "@/lib/data";
 
 export const metadata = {
   title: "AI Tools Directory - KynguyenAI",
@@ -12,8 +12,9 @@ export const metadata = {
     "Khám phá hàng trăm công cụ AI tốt nhất cho mọi nhu cầu. Tìm kiếm, so sánh và đánh giá các công cụ AI phổ biến nhất.",
 };
 
-export default function ToolsPage() {
-  const { data: tools } = getMockTools({ limit: 100 });
+export default async function ToolsPage() {
+  const { data: tools } = await getToolsList({ limit: 100 });
+  const categories = await getCategories();
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,7 +50,7 @@ export default function ToolsPage() {
         </section>
 
         {/* Tools Grid */}
-        <ToolGrid tools={tools} categories={mockToolCategories} />
+        <ToolGrid tools={tools} categories={categories} />
       </main>
 
       <Footer />

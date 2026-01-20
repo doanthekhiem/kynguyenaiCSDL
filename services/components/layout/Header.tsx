@@ -1,10 +1,11 @@
 // Header Component - KynguyenAI v3.0
-// Responsive navigation with dark mode toggle
+// Responsive navigation with auth integration
 
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const navLinks = [
   { href: "/category/ai-news", label: "Tin tức AI" },
@@ -16,17 +17,25 @@ const navLinks = [
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true); // Always start with dark for SSR consistency
-  const [mounted, setMounted] = useState(false); // Track if component has mounted
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
-    setMounted(true);
-    // Read theme preference only on client after mount
+    setTimeout(() => {
+      setMounted(true);
+    }, 0);
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
-      setIsDark(savedTheme === "dark");
+      setTimeout(() => {
+        setIsDark(savedTheme === "dark");
+      }, 0);
     } else {
-      setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+      setTimeout(() => {
+        setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+      }, 0);
     }
   }, []);
 
@@ -39,11 +48,44 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    if (!mounted) return; // Don't update DOM until mounted
+    if (!mounted) return;
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
     document.documentElement.classList.toggle("dark", isDark);
     localStorage.setItem("theme", isDark ? "dark" : "light");
   }, [isDark, mounted]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsUserMenuOpen(false);
+  };
+
+  const getUserInitial = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getUserName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    return user?.email?.split("@")[0] || "User";
+  };
 
   return (
     <header
@@ -77,13 +119,12 @@ export function Header() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
-            {/* Dark Mode Toggle - Only render icon after mount to avoid hydration mismatch */}
+            {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDark(!isDark)}
               className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
               aria-label="Toggle dark mode"
             >
-              {/* Always render SunIcon initially (matches SSR), switch after mount */}
               {!mounted || isDark ? (
                 <SunIcon className="w-5 h-5 text-yellow-400" />
               ) : (
@@ -91,13 +132,73 @@ export function Header() {
               )}
             </button>
 
-            {/* Login Button */}
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-full gradient-hero text-white hover:opacity-90 transition-opacity hover-lift"
-            >
-              Đăng nhập
-            </Link>
+            {/* Auth Section */}
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-surface-hover animate-pulse" />
+            ) : user ? (
+              /* User Menu */
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-surface-hover transition-colors"
+                >
+                  {user.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="Avatar"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-[hsl(199,89%,48%)]"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full gradient-hero flex items-center justify-center text-white text-sm font-medium">
+                      {getUserInitial()}
+                    </div>
+                  )}
+                </button>
+
+                {/* Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl glass-surface border border-surface-border shadow-xl animate-scale-in origin-top-right">
+                    <div className="p-3 border-b border-surface-border">
+                      <p className="font-medium text-sm truncate">{getUserName()}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <div className="p-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-surface-hover transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4" />
+                        Tài khoản
+                      </Link>
+                      <Link
+                        href="/bookmarks"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-surface-hover transition-colors"
+                      >
+                        <BookmarkIcon className="w-4 h-4" />
+                        Đã lưu
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-red-500/10 text-red-500 transition-colors"
+                      >
+                        <LogoutIcon className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Login Button */
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-full gradient-hero text-white hover:opacity-90 transition-opacity hover-lift"
+              >
+                Đăng nhập
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -124,13 +225,15 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mx-4 mt-2 px-4 py-3 text-sm font-medium text-center rounded-full gradient-hero text-white"
-              >
-                Đăng nhập
-              </Link>
+              {!user && (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="mx-4 mt-2 px-4 py-3 text-sm font-medium text-center rounded-full gradient-hero text-white"
+                >
+                  Đăng nhập
+                </Link>
+              )}
             </nav>
           </div>
         )}
@@ -178,6 +281,45 @@ function CloseIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  );
+}
+
+function BookmarkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+      />
+    </svg>
+  );
+}
+
+function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+      />
     </svg>
   );
 }

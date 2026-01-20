@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToolCard } from "@/components/tools/ToolCard";
-import { getMockToolBySlug, getMockTools, getMockToolReviews, mockToolCategories } from "@/lib/mockdata";
+import { getToolDetail, getToolsList, getReviewsForTool, getCategories } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -16,7 +16,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const tool = getMockToolBySlug(slug);
+  const tool = await getToolDetail(slug);
 
   if (!tool) {
     return { title: "Tool not found - KynguyenAI" };
@@ -30,15 +30,16 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ToolDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const tool = getMockToolBySlug(slug);
+  const tool = await getToolDetail(slug);
 
   if (!tool) {
     notFound();
   }
 
-  const reviews = getMockToolReviews(tool.id, 5);
-  const { data: relatedTools } = getMockTools({ limit: 4 });
-  const category = mockToolCategories.find((c) => c.id === tool.category_id);
+  const reviews = await getReviewsForTool(slug, 5);
+  const { data: relatedTools } = await getToolsList({ limit: 5 });
+  const categories = await getCategories();
+  const category = categories.find((c) => c.id === tool.category_id);
 
   const pricingColors: Record<string, string> = {
     free: "badge-free",
