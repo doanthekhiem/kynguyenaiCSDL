@@ -1,10 +1,22 @@
 // ToolCard Component - KynguyenAI v3.0
 // Premium AI Tool card with vote, rating, and pricing display
+// Rule 2.5 - Preload on user intent
+// Rule 6.3 - Use hoisted icons
+
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import type { Tool } from "@/types";
 import { cn } from "@/lib/utils";
+import { ArrowUpIcon, StarIcon } from "@/components/icons/Icons";
+
+// Rule 2.5 - Preload interactive components on hover
+function preloadToolInteractive() {
+  if (typeof window !== "undefined") {
+    void import("./ToolInteractive");
+  }
+}
 
 interface ToolCardProps {
   tool: Tool;
@@ -22,23 +34,6 @@ function formatNumber(num: number): string {
     return (num / 1000).toFixed(1) + "k";
   }
   return num.toString();
-}
-
-// Rule 6.3 - Hoist static JSX elements to avoid re-creation
-function ArrowUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-    </svg>
-  );
-}
-
-function StarIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-    </svg>
-  );
 }
 
 export function ToolCard({ tool, userVoted = false, className, variant = "default" }: ToolCardProps) {
@@ -60,12 +55,15 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
     return (
       <Link
         href={`/tools/${tool.slug}`}
+        onMouseEnter={preloadToolInteractive}
+        onFocus={preloadToolInteractive}
         className={cn(
           "flex items-center gap-3 p-3 rounded-xl",
           "bg-surface border border-surface-border",
           "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-md",
           "transition-all duration-200",
           "group",
+          "[will-change:border-color,box-shadow]",
           className,
         )}
       >
@@ -90,6 +88,8 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
     return (
       <Link
         href={`/tools/${tool.slug}`}
+        onMouseEnter={preloadToolInteractive}
+        onFocus={preloadToolInteractive}
         className={cn(
           "relative overflow-hidden rounded-2xl p-6",
           "bg-gradient-to-br from-surface via-surface to-surface-hover",
@@ -98,6 +98,7 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
           "hover:-translate-y-1",
           "transition-all duration-300",
           "group",
+          "[will-change:transform,border-color,box-shadow]",
           className,
         )}
       >
@@ -141,6 +142,8 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
   return (
     <Link
       href={`/tools/${tool.slug}`}
+      onMouseEnter={preloadToolInteractive}
+      onFocus={preloadToolInteractive}
       className={cn(
         "flex flex-col p-4 rounded-xl",
         "bg-surface border border-surface-border",
@@ -148,6 +151,7 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
         "hover:-translate-y-0.5",
         "transition-all duration-200",
         "group",
+        "[will-change:transform,border-color,box-shadow]",
         className,
       )}
     >

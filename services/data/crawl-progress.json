@@ -2,10 +2,17 @@
   "completed_categories": [
     "productivity",
     "video",
-    "text-generators"
+    "text-generators",
+    "business",
+    "image",
+    "automations",
+    "art",
+    "audio-generators",
+    "code",
+    "misc-tools"
   ],
-  "current_category": "business",
-  "current_page": 2,
-  "total_tools_crawled": 100,
-  "last_updated": "2026-01-21T04:48:55.737Z"
+  "current_category": "misc-tools",
+  "current_page": 1,
+  "total_tools_crawled": 208,
+  "last_updated": "2026-01-21T07:13:21.823Z"
 }

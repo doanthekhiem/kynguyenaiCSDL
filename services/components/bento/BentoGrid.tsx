@@ -1,5 +1,6 @@
 // BentoGrid Components - KynguyenAI v3.0
 // Premium Bento Grid with glassmorphism and animations
+// Rule 7.1 - will-change for animated elements
 
 import { cn } from "@/lib/utils";
 import type { BentoGridProps } from "@/types";
@@ -23,18 +24,19 @@ export function HeroTile({ children, className }: { children: React.ReactNode; c
         "hover:shadow-2xl hover:shadow-[hsl(270,70%,60%)]/20",
         "transition-all duration-500 ease-out",
         "group",
+        "[will-change:transform,box-shadow]",
         className,
       )}
     >
       {/* Animated glow overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 [will-change:opacity]" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">{children}</div>
 
       {/* Decorative elements */}
-      <div className="absolute top-4 right-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-      <div className="absolute bottom-4 left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700" />
+      <div className="absolute top-4 right-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 [will-change:transform]" />
+      <div className="absolute bottom-4 left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 [will-change:transform]" />
     </div>
   );
 }
@@ -73,6 +75,7 @@ export function StandardTile({ children, className }: { children: React.ReactNod
         "hover:-translate-y-1",
         "transition-all duration-300 ease-out",
         "group",
+        "[will-change:transform,box-shadow,border-color]",
         className,
       )}
     >
@@ -101,7 +104,7 @@ export function WideTile({ children, className }: { children: React.ReactNode; c
       )}
     >
       {/* Animated gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out [will-change:transform]" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">{children}</div>

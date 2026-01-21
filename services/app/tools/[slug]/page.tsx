@@ -1,5 +1,6 @@
 // Tool Detail Page - KynguyenAI v3.0
 // Individual AI tool page with details, reviews, and related tools
+// Rule 2.4 - Dynamic imports for heavy interactive components
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToolCard } from "@/components/tools/ToolCard";
-import { ToolInteractive, ToolReviewSection } from "@/components/tools/ToolInteractive";
+import { ToolInteractive, ToolReviewSection } from "@/components/tools/ToolInteractiveWrapper";
 import { getToolDetail, getToolsList, getReviewsForTool, getCategories } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
