@@ -238,26 +238,65 @@ async function extractToolDetail(page: Page, slug: string): Promise<CrawledTool 
       })
       .catch(() => null);
 
-    // Extract website URL
+    // Wait for "Visit Site" button to appear (it might be client-side rendered)
+    try {
+      await page.waitForSelector('a:has-text("Visit Site")', { timeout: 3000 });
+    } catch (e) {
+      // Ignore timeout, button might just be missing or named differently
+    }
+
+    // Extract website URL - look for "Visit Site" button specifically in main area
+    // Use function naming to avoid TypeScript arrow function compilation issues in page.evaluate
     const website_url = await page
-      .evaluate(() => {
+      .evaluate(function () {
         const visitLinks = document.querySelectorAll('a[href*="http"]');
+        // console.log(`[DEBUG] Found ${visitLinks.length} http links on page`);
+
+        // Priority 1: Exact "Visit Site" text (Case insensitive)
         for (let i = 0; i < visitLinks.length; i++) {
           const link = visitLinks[i];
-          const text = link.textContent?.toLowerCase() || "";
+          const text = link.textContent?.toLowerCase().trim() || "";
           const href = link.getAttribute("href") || "";
-          if (
-            (text.includes("visit") || text.includes("website")) &&
-            !href.includes("futurepedia") &&
-            !href.includes("twitter") &&
-            !href.includes("youtube")
-          ) {
+
+          if (href.includes("futurepedia.io")) continue;
+
+          // PRIORITY 1: Exact "Visit Site" match (No sidebar check needed as text is specific)
+          if (text === "visit site") {
+            // console.log(`[DEBUG] FOUND MATCH (Strict): ${href}`);
             return href;
           }
         }
+
+        // Priority 2: "Visit" text but NOT in sidebar and NOT Voila/Aurora
+        for (let i = 0; i < visitLinks.length; i++) {
+          const link = visitLinks[i];
+          const text = link.textContent?.toLowerCase().trim() || "";
+          const href = link.getAttribute("href") || "";
+
+          const isSidebar =
+            !!link.closest('div[class*="sidebar"]') ||
+            !!link.closest('div[class*="featured"]') ||
+            !!link.closest('div[class*="similar"]');
+
+          if (isSidebar) continue;
+          if (href.includes("futurepedia.io")) continue;
+
+          // Skip known ad domains
+          if (href.includes("getvoila.ai") || href.includes("plusdocs.com")) continue;
+
+          if (text.includes("visit") && !href.includes("twitter") && !href.includes("youtube")) {
+            // console.log(`[DEBUG] FOUND MATCH (Loose): ${href}`);
+            return href;
+          }
+        }
+
+        // console.log(`[DEBUG] NO MATCH FOUND`);
         return "";
       })
-      .catch(() => "");
+      .catch((e) => {
+        console.error(`[DEBUG] Error in evaluate: ${e}`);
+        return "";
+      });
 
     // Extract pricing type
     const pricing_type = await page
