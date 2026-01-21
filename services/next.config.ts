@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { hostname: "**.medium.com" },
       { hostname: "**.substack.com" },
       { hostname: "images.unsplash.com" }, // Mockdata images
+      { hostname: "cdn2.futurepedia.io" }, // Futurepedia tool logos
       { hostname: "upload.wikimedia.org" }, // Logos (Wikipedia)
       { hostname: "assets-global.website-files.com" }, // Various logos
       { hostname: "github.githubassets.com" }, // GitHub Copilot logo
