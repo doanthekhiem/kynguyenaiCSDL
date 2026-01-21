@@ -2,6 +2,7 @@
 // KynguyenAI v3.0
 
 import { NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 import { createServerClient } from "@/lib/supabase/server";
 import { getToolReviews, createReview, getToolBySlug } from "@/lib/supabase/tools";
 
@@ -28,8 +29,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
 
-    // Get current user from auth
-    const supabase = createServerClient();
+    // Get current user from auth using cookie-based client
+    const supabase = await createRouteHandlerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -38,11 +39,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    // Get user profile ID
-    const { data: profile } = await supabase.from("user_profiles").select("id").eq("auth_id", user.id).single();
+    // Get or create user profile ID using service client for RLS bypass
+    const serviceClient = createServerClient();
+    let { data: profile } = await serviceClient.from("user_profiles").select("id").eq("auth_id", user.id).single();
 
+    // Auto-create profile if not found
     if (!profile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      const { data: newProfile, error: createError } = await serviceClient
+        .from("user_profiles")
+        .insert({
+          auth_id: user.id,
+          email: user.email,
+          display_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+          avatar_url: user.user_metadata?.avatar_url || null,
+        })
+        .select("id")
+        .single();
+
+      if (createError || !newProfile) {
+        console.error("Failed to create user profile:", createError);
+        return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 });
+      }
+      profile = newProfile;
     }
 
     const body = await request.json();
@@ -67,7 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Tool not found" }, { status: 404 });
     }
 
-    const { data: existingReview } = await supabase
+    const { data: existingReview } = await serviceClient
       .from("tool_reviews")
       .select("id")
       .eq("tool_id", tool.id)

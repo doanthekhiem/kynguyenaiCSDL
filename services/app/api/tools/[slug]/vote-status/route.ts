@@ -2,6 +2,7 @@
 // KynguyenAI v3.0
 
 import { NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasUserVoted, getToolBySlug } from "@/lib/supabase/tools";
 
@@ -13,8 +14,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
 
-    // Get current user from auth
-    const supabase = createServerClient();
+    // Get current user from auth using cookie-based client
+    const supabase = await createRouteHandlerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -23,8 +24,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ hasVoted: false, authenticated: false });
     }
 
-    // Get user profile ID
-    const { data: profile } = await supabase.from("user_profiles").select("id").eq("auth_id", user.id).single();
+    // Get user profile ID using service client
+    const serviceClient = createServerClient();
+    const { data: profile } = await serviceClient.from("user_profiles").select("id").eq("auth_id", user.id).single();
 
     if (!profile) {
       return NextResponse.json({ hasVoted: false, authenticated: true });
