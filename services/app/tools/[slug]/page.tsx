@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToolCard } from "@/components/tools/ToolCard";
+import { ToolInteractive, ToolReviewSection } from "@/components/tools/ToolInteractive";
 import { getToolDetail, getToolsList, getReviewsForTool, getCategories } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -186,10 +187,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
             </div>
 
             {/* Vote Button */}
-            <button className="w-full py-4 rounded-xl border-2 border-surface-border bg-surface hover:border-primary/50 transition-colors group flex items-center justify-center gap-2">
-              <ArrowUpIcon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-              <span className="font-semibold text-foreground">Vote</span>
-            </button>
+            <ToolInteractive toolSlug={slug} initialVoteCount={tool.vote_count} />
           </div>
         </section>
 
@@ -243,6 +241,9 @@ export default async function ToolDetailPage({ params }: PageProps) {
               <p className="text-muted-foreground">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</p>
             </div>
           )}
+
+          {/* Review Form */}
+          <ToolReviewSection toolSlug={slug} />
         </section>
 
         {/* Related Tools */}

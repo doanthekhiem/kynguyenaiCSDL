@@ -2,6 +2,7 @@
 // KynguyenAI v3.0
 
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase/server";
 import { toggleVote } from "@/lib/supabase/tools";
 
 interface RouteParams {
@@ -11,16 +12,25 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
-    const body = await request.json();
 
-    // In a real app, get userId from auth session
-    const { userId } = body;
+    // Get current user from auth
+    const supabase = createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    const result = await toggleVote(slug, userId);
+    // Get user profile ID
+    const { data: profile } = await supabase.from("user_profiles").select("id").eq("auth_id", user.id).single();
+
+    if (!profile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
+
+    const result = await toggleVote(slug, profile.id);
 
     return NextResponse.json({
       ...result,
