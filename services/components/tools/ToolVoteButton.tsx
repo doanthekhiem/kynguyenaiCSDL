@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,15 @@ interface ToolVoteButtonProps {
   className?: string;
 }
 
+// Rule 6.3 - Hoist static JSX elements to avoid re-creation
+function ArrowUpIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+    </svg>
+  );
+}
+
 export function ToolVoteButton({ toolSlug, initialVoteCount, initialVoted = false, className }: ToolVoteButtonProps) {
   const { user } = useAuth();
   const [isPending, startTransition] = useTransition();
@@ -21,7 +30,8 @@ export function ToolVoteButton({ toolSlug, initialVoteCount, initialVoted = fals
   const [voteCount, setVoteCount] = useState(initialVoteCount);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const handleVote = async () => {
+  // Rule 5.5 - Use functional setState to avoid stale closures
+  const handleVote = useCallback(async () => {
     // Check if user is logged in
     if (!user) {
       setShowLoginPrompt(true);
@@ -29,11 +39,19 @@ export function ToolVoteButton({ toolSlug, initialVoteCount, initialVoted = fals
       return;
     }
 
-    // Optimistic update
-    const newVoted = !voted;
-    const newVoteCount = newVoted ? voteCount + 1 : voteCount - 1;
-    setVoted(newVoted);
-    setVoteCount(newVoteCount);
+    // Optimistic update with functional setState
+    let newVoted: boolean;
+    let newVoteCount: number;
+    
+    setVoted((prev) => {
+      newVoted = !prev;
+      return newVoted;
+    });
+    
+    setVoteCount((prev) => {
+      newVoteCount = newVoted ? prev + 1 : prev - 1;
+      return newVoteCount;
+    });
 
     startTransition(async () => {
       try {
@@ -44,19 +62,19 @@ export function ToolVoteButton({ toolSlug, initialVoteCount, initialVoted = fals
         });
 
         if (!response.ok) {
-          // Revert on error
-          setVoted(!newVoted);
-          setVoteCount(newVoted ? newVoteCount - 1 : newVoteCount + 1);
+          // Revert on error with functional setState
+          setVoted((prev) => !prev);
+          setVoteCount((prev) => (newVoted ? prev - 1 : prev + 1));
           console.error("Vote failed:", await response.text());
         }
       } catch (error) {
-        // Revert on error
-        setVoted(!newVoted);
-        setVoteCount(newVoted ? newVoteCount - 1 : newVoteCount + 1);
+        // Revert on error with functional setState
+        setVoted((prev) => !prev);
+        setVoteCount((prev) => (newVoted ? prev - 1 : prev + 1));
         console.error("Vote error:", error);
       }
     });
-  };
+  }, [user, toolSlug]);
 
   return (
     <div className="relative">
@@ -100,13 +118,5 @@ export function ToolVoteButton({ toolSlug, initialVoteCount, initialVoted = fals
         </div>
       )}
     </div>
-  );
-}
-
-function ArrowUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-    </svg>
   );
 }

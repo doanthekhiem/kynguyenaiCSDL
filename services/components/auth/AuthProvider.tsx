@@ -3,7 +3,7 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, ReactNode } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
@@ -45,12 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithEmail = async (email: string, password: string) => {
+  // Rule 5.5 - Use stable callbacks with useCallback to prevent re-renders
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -59,9 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -69,9 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signInWithGithub = async () => {
+  const signInWithGithub = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
@@ -79,12 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
+  // Rule 5.3 - Include all dependencies in useMemo
   const value = useMemo(
     () => ({
       user,
@@ -96,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGithub,
       signOut,
     }),
-    [user, session, loading],
+    [user, session, loading, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithGithub, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

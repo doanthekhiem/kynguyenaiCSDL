@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,15 @@ interface ToolReviewFormProps {
   toolSlug: string;
   onReviewSubmitted?: () => void;
   className?: string;
+}
+
+// Rule 6.3 - Hoist static JSX elements to avoid re-creation
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+  );
 }
 
 export function ToolReviewForm({ toolSlug, onReviewSubmitted, className }: ToolReviewFormProps) {
@@ -23,11 +32,12 @@ export function ToolReviewForm({ toolSlug, onReviewSubmitted, className }: ToolR
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Rule 7.8 - Early return from functions for validation
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation
+    // Early return - validation
     if (rating === 0) {
       setError("Vui lòng chọn số sao đánh giá");
       return;
@@ -70,7 +80,7 @@ export function ToolReviewForm({ toolSlug, onReviewSubmitted, className }: ToolR
         setError("Có lỗi xảy ra, vui lòng thử lại");
       }
     });
-  };
+  }, [rating, content, title, toolSlug, onReviewSubmitted]);
 
   if (!user) {
     return (
@@ -181,13 +191,5 @@ export function ToolReviewForm({ toolSlug, onReviewSubmitted, className }: ToolR
         {isPending ? "Đang gửi..." : "Gửi đánh giá"}
       </button>
     </form>
-  );
-}
-
-function StarIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-    </svg>
   );
 }

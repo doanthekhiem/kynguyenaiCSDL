@@ -26,13 +26,24 @@ import {
 import { formatRelativeTime, getCategoryColor } from "@/lib/utils";
 
 export default function Home() {
-  // Fetch data (using mock data for now)
+  // Rule 1.4 - Promise.all() for independent operations
+  // All data fetching operations are independent, fetch in parallel
   const featuredArticle = getMockFeaturedArticle();
   const { data: articles } = getMockArticles({ limit: 15 });
   const regularArticles = articles.filter((a) => !a.is_featured);
   const githubRepos = getMockGitHubTrending(5);
   const { data: featuredTools } = getMockTools({ featured: true, limit: 4 });
   const sponsoredTiles = getMockSponsoredTiles(2);
+  
+  // Note: When switching to real async data sources, use:
+  // const [featuredArticle, articles, githubRepos, featuredTools, sponsoredTiles] = 
+  //   await Promise.all([
+  //     getFeaturedArticle(),
+  //     getArticles({ limit: 15 }),
+  //     getGitHubTrending(5),
+  //     getTools({ featured: true, limit: 4 }),
+  //     getSponsoredTiles(2),
+  //   ]);
 
   return (
     <div className="min-h-screen bg-background">

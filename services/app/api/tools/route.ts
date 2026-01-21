@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validate required fields
+    // Rule 7.8 - Early return from functions - Validate required fields first
     const { name, tagline, description, website_url, pricing_type } = body;
 
     if (!name || !tagline || !description || !website_url || !pricing_type) {
