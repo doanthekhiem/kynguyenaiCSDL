@@ -3,9 +3,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { BentoGrid, HeroTile, StandardTile, GitHubTile } from "@/components/bento/BentoGrid";
+import { BentoGrid, HeroTile, StandardTile, GitHubTile, SkillsTile } from "@/components/bento/BentoGrid";
 import { getMockArticles, getMockFeaturedArticle } from "@/lib/mockdata";
 import { fetchGitHubTrending } from "@/lib/github-trending";
+import { fetchSkillsTrending } from "@/lib/skills-trending";
 import { formatRelativeTime, getCategoryColor } from "@/lib/utils";
 
 export async function HeroSection() {
@@ -14,6 +15,7 @@ export async function HeroSection() {
   const { data: articles } = getMockArticles({ limit: 15 });
   const regularArticles = articles.filter((a) => !a.is_featured);
   const githubRepos = await fetchGitHubTrending(5);
+  const trendingSkills = await fetchSkillsTrending(5);
 
   return (
     <section className="mb-12">
@@ -97,8 +99,42 @@ export async function HeroSection() {
           </div>
         </GitHubTile>
 
+        {/* AI Agent Skills Trending (1x2) */}
+        <SkillsTile>
+          <div className="flex flex-col h-full">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <SkillsIcon className="w-5 h-5" />
+              AI Skills Trending
+            </h3>
+            <div className="space-y-3 flex-grow overflow-hidden">
+              {trendingSkills.map((skill) => (
+                <Link key={skill.name} href={skill.url} target="_blank" className="block group">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-white/40 font-mono mt-0.5 w-4">{skill.rank}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate group-hover:text-purple-400 transition-colors">
+                        {skill.name}
+                      </p>
+                      <p className="text-xs text-white/60 truncate">{skill.owner}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-white/40">
+                        <span className="flex items-center gap-1">
+                          <DownloadIcon className="w-3 h-3 text-purple-400" />
+                          {skill.installs_display}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <Link href="/skills" className="text-xs text-purple-400 hover:underline mt-3 flex items-center gap-1">
+              Xem thêm <ArrowRightIcon className="w-3 h-3" />
+            </Link>
+          </div>
+        </SkillsTile>
+
         {/* Regular Articles */}
-        {regularArticles.slice(0, 9).map((article) => (
+        {regularArticles.slice(0, 8).map((article) => (
           <StandardTile key={article.id}>
             <ArticleTileContent article={article} showImage={false} />
           </StandardTile>
@@ -185,6 +221,30 @@ function StarIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+  );
+}
+
+function SkillsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+      />
+    </svg>
+  );
+}
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+      />
     </svg>
   );
 }

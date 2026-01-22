@@ -48,6 +48,17 @@ export interface GitHubRepo {
   today_stars?: number; // Stars gained today/this week/this month
 }
 
+// ============ AGENT SKILL TYPES ============
+export interface AgentSkill {
+  rank: number; // Thứ hạng (1, 2, 3...)
+  name: string; // Tên skill: "vercel-react-best-practices"
+  owner: string; // Owner/repo: "vercel-labs/agent-skills"
+  url: string; // Link chi tiết: "https://skills.sh/..."
+  installs: number; // Số lượt cài đặt: 5200
+  installs_display: string; // Hiển thị: "5.2K"
+  trending_date: string; // ISO date
+}
+
 // ============ TOOL TYPES ============
 export type PricingType = "free" | "freemium" | "paid" | "enterprise";
 export type ToolStatus = "pending" | "approved" | "rejected" | "archived";

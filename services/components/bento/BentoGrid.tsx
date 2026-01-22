@@ -158,6 +158,30 @@ export function GitHubTile({ children, className }: { children: React.ReactNode;
   );
 }
 
+// Skills tile - For AI Agent Skills trending (purple/pink theme)
+export function SkillsTile({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        "row-span-2 relative overflow-hidden",
+        "bg-gradient-to-b from-[hsl(280,60%,12%)] to-[hsl(300,50%,8%)]",
+        "border border-purple-500/20 rounded-2xl p-5",
+        "hover:border-purple-400/30",
+        "transition-all duration-300",
+        "group",
+        className,
+      )}
+    >
+      {/* Purple/pink glow effect */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-400/15 transition-colors duration-500" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-500/10 rounded-full blur-3xl group-hover:bg-pink-400/15 transition-colors duration-500" />
+
+      {/* Content */}
+      <div className="relative z-10 h-full text-white">{children}</div>
+    </div>
+  );
+}
+
 // Tool showcase tile
 export function ToolShowcaseTile({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
