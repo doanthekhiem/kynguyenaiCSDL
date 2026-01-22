@@ -4,7 +4,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BentoGrid, HeroTile, StandardTile, GitHubTile } from "@/components/bento/BentoGrid";
-import { getMockArticles, getMockFeaturedArticle, getMockGitHubTrending } from "@/lib/mockdata";
+import { getMockArticles, getMockFeaturedArticle } from "@/lib/mockdata";
+import { fetchGitHubTrending } from "@/lib/github-trending";
 import { formatRelativeTime, getCategoryColor } from "@/lib/utils";
 
 export async function HeroSection() {
@@ -12,7 +13,7 @@ export async function HeroSection() {
   const featuredArticle = getMockFeaturedArticle();
   const { data: articles } = getMockArticles({ limit: 15 });
   const regularArticles = articles.filter((a) => !a.is_featured);
-  const githubRepos = getMockGitHubTrending(5);
+  const githubRepos = await fetchGitHubTrending(5);
 
   return (
     <section className="mb-12">
@@ -21,9 +22,7 @@ export async function HeroSection() {
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
             Tin tức AI <span className="gradient-text">mới nhất</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
-            Cập nhật hàng ngày từ các nguồn tin AI uy tín nhất thế giới
-          </p>
+          <p className="text-muted-foreground text-lg">Cập nhật hàng ngày từ các nguồn tin AI uy tín nhất thế giới</p>
         </div>
         <Link
           href="/category/ai-news"

@@ -6,12 +6,7 @@ export type TileSize = "hero" | "tall" | "wide" | "standard";
 
 export type ArticleCategory = "AI Tools" | "AI News" | "AI Tutorial";
 
-export type ArticleSource =
-  | "AlphaSignal"
-  | "TLDR AI"
-  | "The Rundown AI"
-  | "Import AI"
-  | "AI Breakfast";
+export type ArticleSource = "AlphaSignal" | "TLDR AI" | "The Rundown AI" | "Import AI" | "AI Breakfast";
 
 export type ArticleStatus = "draft" | "published" | "archived";
 
@@ -50,6 +45,7 @@ export interface GitHubRepo {
   stars: number;
   language: string;
   trending_date: string;
+  today_stars?: number; // Stars gained today/this week/this month
 }
 
 // ============ TOOL TYPES ============
