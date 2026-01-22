@@ -10,10 +10,11 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { FeaturedToolsSection } from "@/components/home/FeaturedToolsSection";
 import { HeroSkeleton, FeaturedToolsSkeleton } from "@/components/home/Skeletons";
-
+import { Analytics } from "@vercel/analytics/next";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
+      <Analytics />
       <Header />
 
       {/* Main Content - Rule 1.5: Suspense boundaries for faster initial paint */}
