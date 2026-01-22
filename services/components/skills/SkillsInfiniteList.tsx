@@ -30,7 +30,7 @@ export function SkillsInfiniteList({ initialType }: SkillsInfiniteListProps) {
   const type = (searchParams.get("type") as "trending" | "alltime") || initialType;
 
   const [skills, setSkills] = useState<AgentSkill[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with true to show skeleton
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
@@ -79,9 +79,7 @@ export function SkillsInfiniteList({ initialType }: SkillsInfiniteListProps) {
 
   // Initial fetch
   useEffect(() => {
-    if (skills.length === 0 && !loading) {
-      fetchSkills(true);
-    }
+    fetchSkills(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,6 +110,12 @@ export function SkillsInfiniteList({ initialType }: SkillsInfiniteListProps) {
     };
   }, [hasMore, loading, fetchSkills]);
 
+  // Show skeleton on initial load
+  if (skills.length === 0 && loading) {
+    return <SkillsListSkeleton />;
+  }
+
+  // Show empty state if no skills and not loading
   if (skills.length === 0 && !loading) {
     return (
       <div className="text-center py-16">
@@ -197,6 +201,29 @@ export function SkillsInfiniteList({ initialType }: SkillsInfiniteListProps) {
       </div>
 
     </>
+  );
+}
+
+// Skeleton Component
+function SkillsListSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="bg-surface border border-surface-border rounded-xl p-5 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-surface-hover" />
+            <div className="flex-1">
+              <div className="h-5 w-48 bg-surface-hover rounded mb-2" />
+              <div className="h-4 w-32 bg-surface-hover rounded" />
+            </div>
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="h-8 w-20 bg-surface-hover rounded-lg" />
+              <div className="h-8 w-40 bg-surface-hover rounded-lg" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
