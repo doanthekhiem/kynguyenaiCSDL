@@ -13,7 +13,7 @@ export async function FeaturedToolsSection() {
       <div className="flex items-end justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            Công cụ AI <span className="gradient-text">phổ biến</span>
+            Công cụ AI <span className="text-[hsl(199,89%,48%)]">phổ biến</span>
           </h2>
           <p className="text-muted-foreground">Khám phá các công cụ AI được cộng đồng yêu thích nhất</p>
         </div>

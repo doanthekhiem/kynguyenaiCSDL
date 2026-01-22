@@ -34,7 +34,7 @@ export default async function GitHubTrendingPage({ searchParams }: PageProps) {
           <div className="flex items-center gap-3 mb-4">
             <GitHubIcon className="w-10 h-10 text-foreground" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              GitHub <span className="gradient-text">Trending</span>
+              GitHub <span className="text-[hsl(199,89%,48%)]">Trending</span>
             </h1>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
@@ -143,8 +143,8 @@ async function TrendingList({ language, since }: { language?: string; since: "da
             </div>
           </div>
 
-          {/* Hover glow effect */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          {/* Hover effect */}
+          <div className="absolute inset-0 rounded-xl bg-[hsl(199,89%,48%)]/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
         </article>
       ))}
     </div>

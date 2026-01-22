@@ -30,7 +30,7 @@ export function MobileMenu({ navLinks, user, onClose }: MobileMenuProps) {
           <Link
             href="/login"
             onClick={onClose}
-            className="mx-4 mt-2 px-4 py-3 text-sm font-medium text-center rounded-full gradient-hero text-white"
+            className="mx-4 mt-2 px-4 py-3 text-sm font-medium text-center rounded-full bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white transition-colors"
           >
             Đăng nhập
           </Link>

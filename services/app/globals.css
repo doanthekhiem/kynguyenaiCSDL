@@ -36,9 +36,9 @@
   --muted: 220 14% 46%;
   --muted-foreground: 220 9% 46%;
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(270 70% 60%) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(220 70% 50%) 0%, hsl(270 70% 60%) 50%, hsl(330 80% 60%) 100%);
+  /* Gradients - Refined, professional single-tone */
+  --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 89% 38%) 100%);
+  --gradient-hero: hsl(199 89% 48%);
   --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
   --gradient-glow: radial-gradient(circle at center, hsl(199 89% 48% / 0.15) 0%, transparent 70%);
 
@@ -249,15 +249,10 @@ body {
 
 .gradient-hero {
   background: var(--gradient-hero);
-  background-size: 200% 200%;
-  animation: gradient-shift 8s ease infinite;
 }
 
 .gradient-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: hsl(var(--color-primary));
 }
 
 .gradient-border {

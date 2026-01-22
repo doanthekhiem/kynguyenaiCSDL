@@ -28,26 +28,28 @@ export default async function SkillsTrendingPage({ searchParams }: PageProps) {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <SkillsIcon className="w-10 h-10 text-purple-500" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              AI Skills <span className="gradient-text">Trending</span>
-            </h1>
+            <div className="w-12 h-12 rounded-xl bg-[hsl(199,89%,48%)]/10 flex items-center justify-center">
+              <SkillsIcon className="w-6 h-6 text-[hsl(199,89%,48%)]" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                AI Skills <span className="text-[hsl(199,89%,48%)]">Trending</span>
+              </h1>
+            </div>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
             Khám phá các AI Agent Skills đang trending. Cài đặt bằng lệnh{" "}
-            <code className="bg-muted px-2 py-0.5 rounded text-sm">npx skills add owner/repo</code>. Cập nhật mỗi 5 phút
-            từ skills.sh.
+            <code className="bg-surface-hover px-2 py-0.5 rounded text-sm font-mono text-foreground">npx skills add owner/repo</code>
           </p>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
-          {/* Time Range Filter */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Xếp hạng:</span>
-            <div className="flex rounded-lg border border-border overflow-hidden">
+            <div className="flex rounded-lg overflow-hidden border border-surface-border">
               <TimeRangeButton href="/skills?type=trending" active={type === "trending"}>
                 Trending (24h)
               </TimeRangeButton>
@@ -74,59 +76,66 @@ async function SkillsList({ type }: { type: "trending" | "alltime" }) {
 
   if (skills.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-hover flex items-center justify-center">
+          <SkillsIcon className="w-8 h-8 text-muted-foreground" />
+        </div>
         <p className="text-muted-foreground">Không tìm thấy skills nào. Vui lòng thử lại sau.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {skills.map((skill) => (
+    <div className="space-y-3">
+      {skills.map((skill, index) => (
         <article
           key={`${skill.owner}-${skill.name}`}
-          className="group relative bg-card border border-border rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300"
+          className="group relative bg-surface border border-surface-border rounded-xl p-5 hover:border-[hsl(199,89%,48%)]/40 hover:shadow-lg transition-all duration-200"
         >
-          <div className="flex items-start gap-4">
-            {/* Rank */}
-            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 text-purple-400 font-bold text-sm">
-              {skill.rank}
+          <div className="flex items-center gap-4">
+            {/* Rank Badge */}
+            <div className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-lg font-bold text-sm ${
+              index < 3 
+                ? "bg-[hsl(199,89%,48%)] text-white" 
+                : "bg-surface-hover text-foreground"
+            }`}>
+              #{skill.rank}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <Link
-                    href={skill.url}
-                    target="_blank"
-                    className="inline-flex items-center gap-2 text-lg font-semibold text-foreground hover:text-purple-400 transition-colors"
-                  >
-                    {skill.name}
-                    <ExternalLinkIcon className="w-4 h-4 opacity-50" />
-                  </Link>
-                  <p className="text-muted-foreground mt-1">{skill.owner}</p>
-                </div>
+              <div className="flex items-center gap-2 mb-1">
+                <Link
+                  href={skill.url}
+                  target="_blank"
+                  className="text-lg font-semibold text-foreground hover:text-[hsl(199,89%,48%)] transition-colors truncate"
+                >
+                  {skill.name}
+                </Link>
+                <ExternalLinkIcon className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </div>
+              <p className="text-sm text-muted-foreground truncate">{skill.owner}</p>
+            </div>
 
-              {/* Meta */}
-              <div className="flex flex-wrap items-center gap-4 mt-4 text-sm">
-                {/* Installs */}
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <DownloadIcon className="w-4 h-4 text-purple-400" />
-                  <span>{skill.installs_display} installs</span>
-                </span>
-
-                {/* Install command */}
-                <code className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">
-                  npx skills add {skill.owner}
-                </code>
+            {/* Stats */}
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-hover">
+                <DownloadIcon className="w-4 h-4 text-[hsl(199,89%,48%)]" />
+                <span className="text-sm font-medium text-foreground">{skill.installs_display}</span>
               </div>
+              <code className="hidden md:block text-xs bg-surface-hover px-3 py-1.5 rounded-lg font-mono text-muted-foreground">
+                npx skills add {skill.owner}
+              </code>
             </div>
           </div>
 
-          {/* Hover glow effect */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          {/* Mobile Stats */}
+          <div className="flex sm:hidden items-center gap-3 mt-3 pt-3 border-t border-surface-border">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <DownloadIcon className="w-4 h-4 text-[hsl(199,89%,48%)]" />
+              <span>{skill.installs_display} installs</span>
+            </div>
+          </div>
         </article>
       ))}
     </div>
@@ -135,18 +144,18 @@ async function SkillsList({ type }: { type: "trending" | "alltime" }) {
 
 function SkillsListSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-muted" />
+        <div key={i} className="bg-surface border border-surface-border rounded-xl p-5 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-surface-hover" />
             <div className="flex-1">
-              <div className="h-6 w-48 bg-muted rounded mb-2" />
-              <div className="h-4 w-32 bg-muted rounded mb-4" />
-              <div className="flex gap-4">
-                <div className="h-4 w-24 bg-muted rounded" />
-                <div className="h-4 w-40 bg-muted rounded" />
-              </div>
+              <div className="h-5 w-48 bg-surface-hover rounded mb-2" />
+              <div className="h-4 w-32 bg-surface-hover rounded" />
+            </div>
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="h-8 w-20 bg-surface-hover rounded-lg" />
+              <div className="h-8 w-40 bg-surface-hover rounded-lg" />
             </div>
           </div>
         </div>
@@ -159,8 +168,10 @@ function TimeRangeButton({ href, active, children }: { href: string; active: boo
   return (
     <Link
       href={href}
-      className={`px-4 py-1.5 text-sm font-medium transition-colors ${
-        active ? "bg-purple-500 text-white" : "bg-card text-muted-foreground hover:text-foreground"
+      className={`px-4 py-2 text-sm font-medium transition-colors ${
+        active 
+          ? "bg-[hsl(199,89%,48%)] text-white" 
+          : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover"
       }`}
     >
       {children}
@@ -171,7 +182,7 @@ function TimeRangeButton({ href, active, children }: { href: string; active: boo
 // Icons
 function SkillsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -184,11 +195,7 @@ function SkillsIcon({ className }: { className?: string }) {
 function DownloadIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
     </svg>
   );
 }
@@ -196,11 +203,7 @@ function DownloadIcon({ className }: { className?: string }) {
 function ExternalLinkIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
     </svg>
   );
 }

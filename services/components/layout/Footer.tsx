@@ -63,18 +63,18 @@ function HeartIcon({ className }: { className?: string }) {
 export function Footer() {
   return (
     <footer className="relative mt-20 border-t border-surface-border">
-      {/* Gradient accent line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(199,89%,48%)] to-transparent opacity-50" />
+      {/* Accent line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-[hsl(199,89%,48%)] opacity-30" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand Column */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-hero flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[hsl(199,89%,48%)] flex items-center justify-center">
                 <span className="text-white font-bold text-sm">K</span>
               </div>
-              <span className="text-xl font-bold gradient-text">KynguyenAI</span>
+              <span className="text-xl font-bold text-[hsl(199,89%,48%)]">KynguyenAI</span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
               Nền tảng tin tức và công cụ AI hàng đầu cho cộng đồng developer Việt Nam. Cập nhật xu hướng AI mới nhất

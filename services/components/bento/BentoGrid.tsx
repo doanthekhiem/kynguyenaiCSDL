@@ -13,50 +13,46 @@ export function BentoGrid({ children, className }: BentoGridProps) {
   );
 }
 
-// Hero tile (2x2) - Featured articles with animated gradient
+// Hero tile (2x2) - Featured articles with refined solid color
 export function HeroTile({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
       className={cn(
         "col-span-1 md:col-span-2 row-span-2 relative overflow-hidden",
         "rounded-2xl p-6 text-white",
-        "gradient-hero",
-        "hover:shadow-2xl hover:shadow-[hsl(270,70%,60%)]/20",
-        "transition-all duration-500 ease-out",
+        "bg-[hsl(199,89%,48%)]",
+        "hover:shadow-2xl hover:shadow-[hsl(199,89%,48%)]/25",
+        "transition-all duration-300 ease-out",
         "group",
         "[will-change:transform,box-shadow]",
         className,
       )}
     >
-      {/* Animated glow overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 [will-change:opacity]" />
+      {/* Subtle overlay on hover */}
+      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">{children}</div>
 
-      {/* Decorative elements */}
-      <div className="absolute top-4 right-4 w-24 h-24 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 [will-change:transform]" />
-      <div className="absolute bottom-4 left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700 [will-change:transform]" />
+      {/* Subtle decorative element */}
+      <div className="absolute top-4 right-4 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
     </div>
   );
 }
 
-// Tall tile (1x2) - Sidebar content with glass effect
+// Tall tile (1x2) - Sidebar content with clean design
 export function TallTile({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
       className={cn(
         "row-span-2 relative overflow-hidden",
         "bg-surface border border-surface-border rounded-2xl p-5",
-        "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-lg hover:shadow-[hsl(199,89%,48%)]/5",
+        "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-lg",
         "transition-all duration-300 ease-out",
         "group",
         className,
       )}
     >
-      {/* Subtle gradient background on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(199,89%,48%)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
       {/* Content */}
       <div className="relative z-10 h-full">{children}</div>
     </div>
@@ -71,7 +67,7 @@ export function StandardTile({ children, className }: { children: React.ReactNod
         "relative overflow-hidden",
         "bg-surface border border-surface-border rounded-xl p-4",
         "hover:border-[hsl(199,89%,48%)]/30",
-        "hover:shadow-lg hover:shadow-[hsl(199,89%,48%)]/5",
+        "hover:shadow-lg",
         "hover:-translate-y-1",
         "transition-all duration-300 ease-out",
         "group",
@@ -79,9 +75,6 @@ export function StandardTile({ children, className }: { children: React.ReactNod
         className,
       )}
     >
-      {/* Shine effect on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
       {/* Content */}
       <div className="relative z-10 h-full">{children}</div>
     </div>
@@ -95,17 +88,14 @@ export function WideTile({ children, className }: { children: React.ReactNode; c
       className={cn(
         "col-span-1 md:col-span-2 relative overflow-hidden",
         "rounded-xl p-5 text-white",
-        "bg-gradient-to-r from-[hsl(270,70%,55%)] via-[hsl(290,70%,50%)] to-[hsl(330,80%,55%)]",
-        "hover:shadow-xl hover:shadow-[hsl(270,70%,60%)]/20",
+        "bg-[hsl(199,89%,43%)]",
+        "hover:shadow-xl hover:shadow-[hsl(199,89%,48%)]/20",
         "hover:-translate-y-0.5",
         "transition-all duration-300 ease-out",
         "group",
         className,
       )}
     >
-      {/* Animated gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out [will-change:transform]" />
-
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">{children}</div>
     </div>
@@ -119,15 +109,13 @@ export function NewsletterTile({ children, className }: { children: React.ReactN
       className={cn(
         "col-span-full relative overflow-hidden",
         "rounded-2xl p-8 md:p-12",
-        "gradient-hero",
+        "bg-[hsl(199,89%,48%)]",
         "text-white",
         className,
       )}
     >
-      {/* Animated background elements */}
+      {/* Subtle background element */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-white/5 to-transparent rounded-full" />
 
       {/* Content */}
       <div className="relative z-10">{children}</div>
@@ -141,7 +129,7 @@ export function GitHubTile({ children, className }: { children: React.ReactNode;
     <div
       className={cn(
         "row-span-2 relative overflow-hidden",
-        "bg-gradient-to-b from-[hsl(220,20%,10%)] to-[hsl(220,20%,6%)]",
+        "bg-[hsl(220,20%,8%)]",
         "border border-surface-border rounded-2xl p-5",
         "hover:border-white/10",
         "transition-all duration-300",
@@ -149,33 +137,26 @@ export function GitHubTile({ children, className }: { children: React.ReactNode;
         className,
       )}
     >
-      {/* GitHub glow effect */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors duration-500" />
-
       {/* Content */}
       <div className="relative z-10 h-full text-white">{children}</div>
     </div>
   );
 }
 
-// Skills tile - For AI Agent Skills trending (purple/pink theme)
+// Skills tile - For AI Agent Skills trending
 export function SkillsTile({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
       className={cn(
         "row-span-2 relative overflow-hidden",
-        "bg-gradient-to-b from-[hsl(280,60%,12%)] to-[hsl(300,50%,8%)]",
-        "border border-purple-500/20 rounded-2xl p-5",
-        "hover:border-purple-400/30",
+        "bg-[hsl(220,20%,8%)]",
+        "border border-surface-border rounded-2xl p-5",
+        "hover:border-white/10",
         "transition-all duration-300",
         "group",
         className,
       )}
     >
-      {/* Purple/pink glow effect */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-400/15 transition-colors duration-500" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-500/10 rounded-full blur-3xl group-hover:bg-pink-400/15 transition-colors duration-500" />
-
       {/* Content */}
       <div className="relative z-10 h-full text-white">{children}</div>
     </div>
@@ -188,16 +169,16 @@ export function ToolShowcaseTile({ children, className }: { children: React.Reac
     <div
       className={cn(
         "row-span-2 relative overflow-hidden",
-        "bg-gradient-to-br from-surface to-surface-hover",
+        "bg-surface",
         "border border-surface-border rounded-2xl p-5",
-        "hover:border-[hsl(160,84%,39%)]/30 hover:shadow-lg hover:shadow-[hsl(160,84%,39%)]/5",
+        "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-lg",
         "transition-all duration-300",
         "group",
         className,
       )}
     >
-      {/* Accent gradient */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(160,84%,39%)] via-[hsl(199,89%,48%)] to-[hsl(270,70%,60%)]" />
+      {/* Accent line */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[hsl(199,89%,48%)]" />
 
       {/* Content */}
       <div className="relative z-10 h-full">{children}</div>

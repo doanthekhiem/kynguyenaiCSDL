@@ -24,7 +24,7 @@ export default async function ToolsPage() {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            AI Tools <span className="gradient-text">Directory</span>
+            AI Tools <span className="text-[hsl(199,89%,48%)]">Directory</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Khám phá và so sánh hàng trăm công cụ AI tốt nhất cho công việc, sáng tạo và phát triển sản phẩm
@@ -43,7 +43,7 @@ export default async function ToolsPage() {
               key={stat.label}
               className="p-6 rounded-xl bg-surface border border-surface-border text-center hover:border-primary/30 transition-colors"
             >
-              <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">{stat.value}</div>
+              <div className="text-2xl md:text-3xl font-bold text-[hsl(199,89%,48%)] mb-1">{stat.value}</div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}

@@ -106,7 +106,7 @@ export function ToolGrid({ tools, categories, className }: ToolGridProps) {
           className={cn(
             "px-4 py-2 rounded-full text-sm font-medium transition-all",
             selectedCategory === null
-              ? "gradient-hero text-white"
+              ? "bg-[hsl(199,89%,48%)] text-white"
               : "bg-surface border border-surface-border text-muted-foreground hover:text-foreground hover:border-primary/30",
           )}
         >
@@ -119,7 +119,7 @@ export function ToolGrid({ tools, categories, className }: ToolGridProps) {
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium transition-all",
               selectedCategory === cat.id
-                ? "gradient-hero text-white"
+                ? "bg-[hsl(199,89%,48%)] text-white"
                 : "bg-surface border border-surface-border text-muted-foreground hover:text-foreground hover:border-primary/30",
             )}
           >

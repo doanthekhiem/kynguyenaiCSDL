@@ -184,8 +184,8 @@ export function ToolReviewForm({ toolSlug, onReviewSubmitted, className }: ToolR
         disabled={isPending}
         className={cn(
           "w-full py-3 rounded-xl font-semibold transition-all duration-200",
-          "gradient-hero text-white",
-          "hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed",
+          "bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
         )}
       >
         {isPending ? "Đang gửi..." : "Gửi đánh giá"}

@@ -69,20 +69,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[hsl(199,89%,48%)] rounded-full blur-[150px] opacity-20 animate-float" />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[hsl(270,70%,60%)] rounded-full blur-[150px] opacity-20 animate-float"
-          style={{ animationDelay: "-3s" }}
-        />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[hsl(199,89%,48%)] rounded-full blur-[150px] opacity-10" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[hsl(199,89%,38%)] rounded-full blur-[150px] opacity-10" />
       </div>
 
       <div className="relative z-10 w-full max-w-md px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[hsl(199,89%,48%)] flex items-center justify-center">
             <span className="text-white font-bold text-lg">K</span>
           </div>
-          <span className="text-2xl font-bold gradient-text">KynguyenAI</span>
+          <span className="text-2xl font-bold text-[hsl(199,89%,48%)]">KynguyenAI</span>
         </Link>
 
         {/* Login Card */}
@@ -162,7 +159,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl gradient-hero text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

@@ -85,7 +85,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 {tool.logo_url ? (
                   <Image src={tool.logo_url} alt={tool.name} width={80} height={80} className="object-contain" />
                 ) : (
-                  <span className="text-3xl font-bold gradient-text">{tool.name.charAt(0)}</span>
+                  <span className="text-3xl font-bold text-[hsl(199,89%,48%)]">{tool.name.charAt(0)}</span>
                 )}
               </div>
 
@@ -93,7 +93,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold text-foreground">{tool.name}</h1>
                   {tool.featured && (
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white">
                       Featured
                     </span>
                   )}
@@ -139,12 +139,12 @@ export default async function ToolDetailPage({ params }: PageProps) {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* CTA Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-surface via-surface to-surface-hover border border-surface-border">
+            <div className="p-6 rounded-2xl bg-surface border border-surface-border">
               <Link
                 href={tool.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full py-3 rounded-xl text-center font-semibold gradient-hero text-white hover:opacity-90 transition-opacity hover-lift mb-4"
+                className="block w-full py-3 rounded-xl text-center font-semibold bg-[hsl(199,89%,48%)] hover:bg-[hsl(199,89%,43%)] text-white transition-colors hover-lift mb-4"
               >
                 Truy cập {tool.name}
               </Link>

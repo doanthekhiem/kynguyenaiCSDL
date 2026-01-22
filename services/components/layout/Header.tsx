@@ -37,7 +37,8 @@ const navLinks = [
   { href: "/category/ai-news", label: "Tin tức AI" },
   { href: "/category/ai-tools", label: "Công cụ AI" },
   { href: "/category/ai-tutorial", label: "Hướng dẫn" },
-  { href: "/tools", label: "AI Tools Directory" },
+  { href: "/tools", label: "AI Tools" },
+  { href: "/skills", label: "AI Skills" },
 ];
 
 // localStorage cache theo rule 7.5 - Cache Storage API Calls
@@ -161,17 +162,17 @@ export function Header() {
       />
       <header
         className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled ? "glass-dark shadow-lg border-b border-white/5" : "bg-transparent"
+          isScrolled ? "glass-dark backdrop-blur-2xl shadow-lg border-b border-white/5" : "bg-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg gradient-hero flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[hsl(199,89%,48%)] flex items-center justify-center">
               <span className="text-white font-bold text-sm">K</span>
             </div>
-            <span className="text-xl font-bold gradient-text">KynguyenAI</span>
+            <span className="text-xl font-bold text-[hsl(199,89%,48%)]">KynguyenAI</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -183,7 +184,7 @@ export function Header() {
                 className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
               >
                 {link.label}
-                <span className="absolute inset-x-2 bottom-0 h-0.5 bg-gradient-to-r from-[hsl(199,89%,48%)] to-[hsl(270,70%,60%)] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                <span className="absolute inset-x-2 bottom-0 h-0.5 bg-[hsl(199,89%,48%)] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
             ))}
           </nav>
@@ -222,7 +223,7 @@ export function Header() {
                       className="w-8 h-8 rounded-full object-cover border-2 border-[hsl(199,89%,48%)]"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full gradient-hero flex items-center justify-center text-white text-sm font-medium">
+                    <div className="w-8 h-8 rounded-full bg-[hsl(199,89%,48%)] flex items-center justify-center text-white text-sm font-medium">
                       {getUserInitial()}
                     </div>
                   )}
@@ -241,7 +242,7 @@ export function Header() {
               /* Login Button */
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-full gradient-hero text-white hover:opacity-90 transition-opacity hover-lift"
+                className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-[hsl(199,89%,48%)] text-white hover:bg-[hsl(199,89%,43%)] transition-colors hover-lift"
               >
                 Đăng nhập
               </Link>

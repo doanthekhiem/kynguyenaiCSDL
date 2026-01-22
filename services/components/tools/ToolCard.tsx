@@ -92,9 +92,9 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
         onFocus={preloadToolInteractive}
         className={cn(
           "relative overflow-hidden rounded-2xl p-6",
-          "bg-gradient-to-br from-surface via-surface to-surface-hover",
+          "bg-surface",
           "border border-surface-border",
-          "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-xl hover:shadow-[hsl(199,89%,48%)]/10",
+          "hover:border-[hsl(199,89%,48%)]/30 hover:shadow-xl",
           "hover:-translate-y-1",
           "transition-all duration-300",
           "group",
@@ -104,7 +104,7 @@ export function ToolCard({ tool, userVoted = false, className, variant = "defaul
       >
         {/* Featured badge */}
         <div className="absolute top-4 right-4">
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-500 text-white">
             Featured
           </span>
         </div>
@@ -224,8 +224,8 @@ function ToolLogo({ tool, size = "md" }: { tool: Tool; size?: "sm" | "md" | "lg"
       className={cn(
         sizeClasses[size],
         "rounded-xl flex items-center justify-center flex-shrink-0",
-        "bg-gradient-to-br from-primary/20 to-[hsl(270,70%,60%)]/20",
-        "text-primary font-bold",
+        "bg-[hsl(199,89%,48%)]/10",
+        "text-[hsl(199,89%,48%)] font-bold",
       )}
     >
       {tool.name.charAt(0).toUpperCase()}

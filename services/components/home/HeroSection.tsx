@@ -22,7 +22,7 @@ export async function HeroSection() {
       <div className="flex items-end justify-between mb-8">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Tin tức AI <span className="gradient-text">mới nhất</span>
+            Tin tức AI <span className="text-[hsl(199,89%,48%)]">mới nhất</span>
           </h1>
           <p className="text-muted-foreground text-lg">Cập nhật hàng ngày từ các nguồn tin AI uy tín nhất thế giới</p>
         </div>
