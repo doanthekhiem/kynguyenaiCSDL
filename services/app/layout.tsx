@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "KynguyenAI - Tin tức AI tiếng Việt",
+    default: "KynguyenAI - Cập nhật tin tức AI & công cụ AI tiếng Việt",
     template: "%s | KynguyenAI",
   },
   description:
-    "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới.",
+    "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
   keywords: ["AI", "trí tuệ nhân tạo", "machine learning", "GPT", "LLM", "công cụ AI", "tin tức AI"],
   authors: [{ name: "KynguyenAI" }],
   openGraph: {
@@ -27,18 +27,36 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     url: "https://kynguyenai.vn",
     siteName: "KynguyenAI",
-    title: "KynguyenAI - Tin tức AI tiếng Việt",
-    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt.",
+    title: "KynguyenAI - Cập nhật tin tức AI & công cụ AI tiếng Việt",
+    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
+    images: [
+      {
+        url: "https://kynguyenai.vn/og-img.webp",
+        width: 1200,
+        height: 630,
+        alt: "KynguyenAI - Tin tức AI tiếng Việt",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "KynguyenAI - Tin tức AI tiếng Việt",
-    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt.",
+    title: "KynguyenAI - Cập nhật tin tức AI & công cụ AI tiếng Việt",
+    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
+    images: ["https://kynguyenai.vn/og-img.webp"],
   },
   robots: {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
