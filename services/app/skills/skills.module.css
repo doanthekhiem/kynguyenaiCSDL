@@ -1,0 +1,7 @@
+/* Skills List Performance Optimization */
+/* Rule 6.2: CSS content-visibility for Long Lists */
+
+.skillItem {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 100px;
+}
