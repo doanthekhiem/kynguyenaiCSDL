@@ -228,7 +228,8 @@ export interface ProcessedNewsItem {
   category_slug: string;
   url_hash: string;
   actual_url: string;
-  thumbnail?: string;
+  link: string;
+  thumbnail: string | null;
 }
 
 // Process single news item
@@ -248,6 +249,8 @@ export async function processNewsItem(
     category_slug: translated.category_slug,
     url_hash: generateHash(actualUrl),
     actual_url: actualUrl,
+    link: item.link,
+    thumbnail: null,
   };
 }
 
