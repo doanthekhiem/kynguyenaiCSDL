@@ -1,8 +1,8 @@
-# Kiến trúc Component - KynguyenAI.vn (v3.0 - No-Code Automation)
+# Kiến trúc Component - KynguyenAI.vn (v3.1 - Newsletter Tracking)
 
-> **Phiên bản**: 3.0
-> **Cập nhật**: 13/01/2026
-> **Thay đổi chính**: Make.com thay Vercel Cron, Google Sheets thay Airtable
+> **Phiên bản**: 3.1
+> **Cập nhật**: 23/01/2026
+> **Thay đổi chính**: Newsletter AI News Tracking với Gmail API + Vercel Cron
 
 ---
 
@@ -50,16 +50,16 @@
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 So sánh v2.0 vs v3.0
+### 1.2 So sánh v2.0 vs v3.0 vs v3.1
 
-| Thành phần | v2.0 | v3.0 |
-|------------|------|------|
-| **Automation** | Vercel Cron (code) | **Make.com** (no-code) |
-| **Database** | Airtable (1000 records) | **Google Sheets** (unlimited) |
-| **AI** | Gemini Flash | **Perplexity Sonar** |
-| **Nguồn tin** | NewsData.io API | **Email newsletters** |
-| **Next.js** | 14/15 | **16** (React 19.2) |
-| **Dedup** | URL check | **Hash-based** (url + title) |
+| Thành phần | v2.0 | v3.0 | v3.1 |
+|------------|------|------|------|
+| **Automation** | Vercel Cron | Make.com | **Vercel Cron + Gmail API** |
+| **Database** | Airtable | Google Sheets | **Supabase PostgreSQL** |
+| **AI** | Gemini Flash | Perplexity Sonar | **Perplexity API** |
+| **Nguồn tin** | NewsData.io API | Email (Make.com) | **Gmail API Direct** |
+| **Next.js** | 14/15 | 16 | **16** (React 19.2) |
+| **Dedup** | URL check | Hash (MD5) | **SHA256 URL Hash** |
 
 ### 1.3 Nguyên tắc Thiết kế
 
@@ -752,13 +752,209 @@ Xem thêm:
 
 ---
 
-## 12. Xem thêm
+## 12. Newsletter AI News Tracking (Phase 5)
+
+### 12.1 Tổng quan
+
+Newsletter Tracking tự động thu thập tin tức AI từ các newsletter (beehiiv, substack), dịch sang tiếng Việt bằng Perplexity API, phân loại và hiển thị cho người dùng.
+
+**Điểm khác biệt so với v3.0:**
+- Sử dụng **Gmail API trực tiếp** thay vì Make.com
+- **Vercel Cron** thay vì external automation
+- Lưu vào **Supabase PostgreSQL** thay vì Google Sheets
+- Full control trong codebase Next.js
+
+### 12.2 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              NEWSLETTER TRACKING ARCHITECTURE (v3.1)                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   EMAIL NEWSLETTERS                                                  │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  beehiiv | substack | therundown.ai | alphasignal           │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │                        GMAIL INBOX                           │   │
+│   │  • Label: AI-Newsletters                                     │   │
+│   │  • Filter: from:*@beehiiv.com OR *@substack.com             │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │                    VERCEL CRON (*/10 * * * *)                │   │
+│   │                    POST /api/newsletter/sync                 │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│              ┌───────────────┼───────────────┐                      │
+│              │               │               │                      │
+│              ▼               ▼               ▼                      │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
+│   │  GMAIL API   │  │  PERPLEXITY  │  │   SUPABASE   │             │
+│   │  (OAuth2)    │  │  (Translate) │  │  (Database)  │             │
+│   │  Fetch email │  │  Categorize  │  │  Store news  │             │
+│   └──────────────┘  └──────────────┘  └──────────────┘             │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.3 Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      NEWSLETTER SYNC FLOW                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   1. FETCH EMAILS                                                    │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  Gmail API → fetchUnreadNewsletters()                        │   │
+│   │  Query: (from:*@beehiiv.com OR *@substack.com) is:unread    │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│   2. PARSE HTML                                                      │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  parseNewsletterEmail(html)                                  │   │
+│   │  → Extract: title, summary, link, thumbnail                  │   │
+│   │  → Resolve beehiiv redirects                                 │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│   3. DEDUPLICATION                                                   │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  url_hash = SHA256(normalized_url)                           │   │
+│   │  checkDuplicate(url_hash) → skip if exists                   │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│   4. AI PROCESSING                                                   │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  Perplexity API → translateAndCategorize()                   │   │
+│   │  → title_vi, summary_vi, category_slug                       │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│   5. SAVE TO DATABASE                                                │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  createNewsletterNews() → Supabase                           │   │
+│   │  markAsProcessed() → Gmail (add label)                       │   │
+│   └──────────────────────────┬──────────────────────────────────┘   │
+│                              │                                       │
+│   6. REVALIDATE CACHE                                                │
+│   ┌─────────────────────────────────────────────────────────────┐   │
+│   │  revalidatePath("/")                                         │   │
+│   │  revalidatePath("/newsletter")                               │   │
+│   └─────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.4 Database Tables (Supabase)
+
+| Table | Description | Key Fields |
+|-------|-------------|------------|
+| `newsletter_sources` | Nguồn newsletter | name, slug, email_pattern |
+| `newsletter_categories` | Danh mục tin | name, slug, color, icon |
+| `newsletter_news` | Tin tức đã xử lý | title_vi, summary_vi, url_hash |
+| `newsletter_processing_queue` | Queue xử lý | email_id, status |
+
+**Categories:**
+- ai-models, ai-tools, ai-research
+- ai-business, ai-regulation, ai-tutorials
+- ai-funding, ai-ethics, general
+
+### 12.5 File Structure
+
+```
+services/
+├── lib/newsletter/
+│   ├── index.ts              # Re-exports
+│   ├── gmail.ts              # Gmail API client (OAuth2)
+│   ├── email-parser.ts       # Parse beehiiv/substack HTML
+│   ├── perplexity.ts         # Translate + Categorize
+│   └── data.ts               # Supabase queries
+├── app/
+│   ├── api/newsletter/
+│   │   ├── sync/route.ts     # Cron endpoint
+│   │   ├── route.ts          # GET news list
+│   │   ├── categories/route.ts
+│   │   └── sources/route.ts
+│   └── newsletter/
+│       └── page.tsx          # Listing page
+├── components/newsletter/
+│   ├── NewsletterCard.tsx    # Card variants
+│   └── NewsletterNewsSection.tsx  # Homepage section
+└── scripts/
+    └── gmail-authorize.ts    # OAuth2 setup script
+```
+
+### 12.6 Components
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `NewsletterCard` | `/components/newsletter/` | Card hiển thị tin (3 variants) |
+| `NewsletterCardCompact` | `/components/newsletter/` | Compact card cho grid |
+| `NewsletterCardFeatured` | `/components/newsletter/` | Featured card lớn |
+| `NewsletterNewsSection` | `/components/newsletter/` | Section homepage |
+| `NewsletterNewsSkeleton` | `/components/home/` | Loading skeleton |
+
+### 12.7 API Routes
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/newsletter/sync` | POST | Cron sync (authenticated) |
+| `/api/newsletter` | GET | List news với filter |
+| `/api/newsletter/categories` | GET | List categories |
+| `/api/newsletter/sources` | GET | List sources |
+
+### 12.8 Environment Variables
+
+```env
+# Gmail OAuth2
+GMAIL_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=your-client-secret
+GMAIL_REFRESH_TOKEN=your-refresh-token
+
+# Cron Authentication
+CRON_SECRET=your-cron-secret
+
+# Already configured
+PERPLEXITY_API_KEY=pplx-xxx
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+```
+
+### 12.9 Vercel Cron Configuration
+
+```json
+// vercel.json
+{
+  "crons": [
+    {
+      "path": "/api/newsletter/sync",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
+```
+
+### 12.10 Chi tiết
+
+Xem thêm:
+- [HLD-NF-NEWSLETTER-TRACKING.md](../HLD/MVP.1/HLD-NF-NEWSLETTER-TRACKING.md) - High Level Design
+- [US-NF-NEWSLETTER-TRACKING.md](../US/US-NF-NEWSLETTER-TRACKING.md) - User Stories
+- [DD-Newsletter-Tracking.md](../DD/DD-Newsletter-Tracking.md) - Detail Design
+
+---
+
+## 13. Xem thêm
 
 - [Tech-Stack.md](./Tech-Stack.md) - Chi tiết tech stack v3.0
 - [HLD-DF-DATA-PIPELINE.md](../HLD/MVP.1/HLD-DF-DATA-PIPELINE.md) - Chi tiết Make.com flow
 - [HLD-CF-AI-PROCESSING.md](../HLD/MVP.1/HLD-CF-AI-PROCESSING.md) - Chi tiết Perplexity
 - [HLD-TL-TOOLS.md](../HLD/MVP.1/HLD-TL-TOOLS.md) - Chi tiết AI Tools Directory
-- Make.com: https://www.make.com
-- Google Sheets API: https://developers.google.com/sheets/api
+- [HLD-NF-NEWSLETTER-TRACKING.md](../HLD/MVP.1/HLD-NF-NEWSLETTER-TRACKING.md) - Newsletter Tracking
+- [DD-Newsletter-Tracking.md](../DD/DD-Newsletter-Tracking.md) - Detail Design Newsletter
+- Gmail API: https://developers.google.com/gmail/api
 - Perplexity API: https://docs.perplexity.ai
+- Supabase: https://supabase.com
 - BentoGrids: https://bentogrids.com

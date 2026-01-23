@@ -1,8 +1,8 @@
-# Tech Stack - KynguyenAI.vn (v3.0 - No-Code Automation)
+# Tech Stack - KynguyenAI.vn (v3.1 - Newsletter Tracking)
 
-> **Phiên bản**: 3.0
-> **Cập nhật**: 13/01/2026
-> **Thay đổi chính**: Next.js 16, Perplexity API, Make.com, Google Sheets
+> **Phiên bản**: 3.1
+> **Cập nhật**: 23/01/2026
+> **Thay đổi chính**: Gmail API + Vercel Cron cho Newsletter Tracking, Supabase PostgreSQL
 
 ---
 
@@ -39,18 +39,18 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 So sánh v2.0 vs v3.0
+### 1.2 So sánh v2.0 vs v3.0 vs v3.1
 
-| Thành phần | v2.0 (Cũ) | v3.0 (Mới) |
-|------------|-----------|------------|
-| **Next.js** | 14/15 | **16** (React 19.2) |
-| **UI Kit** | Shadcn tự code | **BentoGrids.com** templates |
-| **AI API** | Gemini Flash | **Perplexity Sonar** |
-| **Nguồn tin** | NewsData.io + GitHub | **Make.com** (Email newsletters) |
-| **Database** | Airtable (1000 records) | **Google Sheets** (unlimited) |
-| **Automation** | Vercel Cron | **Make.com** (no-code) |
-| **Dedup** | URL check đơn giản | **Hash-based** (url + title) |
-| **Chi phí** | $0-5/tháng | **$0/tháng** |
+| Thành phần | v2.0 (Cũ) | v3.0 | v3.1 (Mới) |
+|------------|-----------|------|------------|
+| **Next.js** | 14/15 | 16 | **16** (React 19.2) |
+| **UI Kit** | Shadcn tự code | BentoGrids.com | **BentoGrids + Custom** |
+| **AI API** | Gemini Flash | Perplexity Sonar | **Perplexity API** |
+| **Nguồn tin** | NewsData.io | Make.com | **Gmail API Direct** |
+| **Database** | Airtable | Google Sheets | **Supabase PostgreSQL** |
+| **Automation** | Vercel Cron | Make.com | **Vercel Cron + Gmail API** |
+| **Dedup** | URL check | Hash MD5 | **SHA256 URL Hash** |
+| **Chi phí** | $0-5/tháng | $0/tháng | **$0/tháng** |
 
 ### 1.3 Tiêu chí Lựa chọn
 
@@ -787,12 +787,105 @@ kynguyenai-web/
 
 ---
 
-## 12. Xem thêm
+## 12. Newsletter Tracking Stack (v3.1)
+
+### 12.1 Công nghệ mới
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Email Fetching** | Gmail API + OAuth2 | Fetch email trực tiếp |
+| **Cron** | Vercel Cron | Scheduled sync mỗi 10 phút |
+| **Database** | Supabase PostgreSQL | Lưu tin tức, RLS security |
+| **AI** | Perplexity API | Dịch + phân loại |
+| **Dedup** | SHA256 | URL hash deduplication |
+
+### 12.2 Gmail API Integration
+
+```typescript
+// lib/newsletter/gmail.ts
+import { google } from "googleapis";
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+});
+
+const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+export async function fetchUnreadNewsletters() {
+  const response = await gmail.users.messages.list({
+    userId: "me",
+    q: "(from:*@beehiiv.com OR from:*@substack.com) is:unread",
+    maxResults: 10,
+  });
+  // ... parse messages
+}
+```
+
+### 12.3 Vercel Cron Configuration
+
+```json
+// vercel.json
+{
+  "crons": [
+    {
+      "path": "/api/newsletter/sync",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
+```
+
+### 12.4 Supabase Schema
+
+```sql
+-- newsletter_news table
+CREATE TABLE newsletter_news (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  url_hash VARCHAR(64) UNIQUE NOT NULL,
+  original_title VARCHAR(500) NOT NULL,
+  original_url VARCHAR(1000) NOT NULL,
+  title_vi VARCHAR(500) NOT NULL,
+  summary_vi TEXT NOT NULL,
+  thumbnail_url VARCHAR(1000),
+  source_id UUID REFERENCES newsletter_sources(id),
+  category_id UUID REFERENCES newsletter_categories(id),
+  published_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 12.5 Environment Variables (v3.1)
+
+```env
+# Gmail OAuth2 (new)
+GMAIL_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=your-client-secret
+GMAIL_REFRESH_TOKEN=your-refresh-token
+
+# Cron Authentication (new)
+CRON_SECRET=your-cron-secret
+
+# Existing
+PERPLEXITY_API_KEY=pplx-xxx
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+```
+
+---
+
+## 13. Xem thêm
 
 - [ComponentView.md](./ComponentView.md) - Kiến trúc tổng quan
 - [HLD-DF-DATA-PIPELINE.md](../HLD/MVP.1/HLD-DF-DATA-PIPELINE.md) - Chi tiết Make.com flow
 - [HLD-CF-AI-PROCESSING.md](../HLD/MVP.1/HLD-CF-AI-PROCESSING.md) - Chi tiết Perplexity integration
+- [HLD-NF-NEWSLETTER-TRACKING.md](../HLD/MVP.1/HLD-NF-NEWSLETTER-TRACKING.md) - Newsletter Tracking HLD
+- [DD-Newsletter-Tracking.md](../DD/DD-Newsletter-Tracking.md) - Newsletter Detail Design
 - Next.js 16: https://nextjs.org/blog/next-16
+- Gmail API: https://developers.google.com/gmail/api
 - Perplexity API: https://docs.perplexity.ai
-- Make.com: https://www.make.com
+- Supabase: https://supabase.com
 - BentoGrids: https://bentogrids.com

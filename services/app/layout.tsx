@@ -28,7 +28,8 @@ export const metadata: Metadata = {
     url: "https://kynguyenai.vn",
     siteName: "KynguyenAI",
     title: "KynguyenAI - Cập nhật tin tức AI & công cụ AI tiếng Việt",
-    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
+    description:
+      "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
     images: [
       {
         url: "https://kynguyenai.vn/og-img.webp",
@@ -41,7 +42,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "KynguyenAI - Cập nhật tin tức AI & công cụ AI tiếng Việt",
-    description: "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
+    description:
+      "Cập nhật tin tức AI, công cụ AI, và hướng dẫn AI mới nhất bằng tiếng Việt. Nguồn tin tổng hợp từ các newsletter AI hàng đầu thế giới, được biên dịch và chọn lọc.",
     images: ["https://kynguyenai.vn/og-img.webp"],
   },
   robots: {
@@ -66,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

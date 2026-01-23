@@ -33,3 +33,22 @@ export function FeaturedToolsSkeleton() {
     </section>
   );
 }
+
+export function NewsletterNewsSkeleton() {
+  return (
+    <section className="py-12">
+      <div className="mb-8">
+        <div className="h-8 w-48 skeleton mb-2" />
+        <div className="h-5 w-64 skeleton" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="h-[300px] skeleton rounded-2xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-[200px] skeleton rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

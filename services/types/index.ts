@@ -272,3 +272,122 @@ export interface ToolCardProps {
   userVoted?: boolean;
   className?: string;
 }
+
+// ============ NEWSLETTER TYPES ============
+export type NewsletterStatus = "draft" | "published" | "archived" | "rejected";
+export type QueueStatus = "pending" | "processing" | "completed" | "failed" | "skipped";
+
+export interface NewsletterSource {
+  id: string;
+  slug: string;
+  name: string;
+  name_vi: string | null;
+  email_pattern: string | null;
+  logo_url: string | null;
+  website_url: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface NewsletterCategory {
+  id: string;
+  slug: string;
+  name: string;
+  name_vi: string;
+  icon: string | null;
+  color: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface NewsletterNews {
+  id: string;
+  url_hash: string;
+  original_title: string;
+  original_summary: string | null;
+  original_url: string;
+  title_vi: string;
+  summary_vi: string;
+  thumbnail_url: string | null;
+  source_id: string | null;
+  category_id: string | null;
+  email_subject: string | null;
+  email_received_at: string | null;
+  email_id: string | null;
+  is_featured: boolean;
+  status: NewsletterStatus;
+  perplexity_model: string | null;
+  auto_categorized: boolean;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  source?: NewsletterSource | null;
+  category?: NewsletterCategory | null;
+}
+
+export interface NewsletterNewsWithRelations extends NewsletterNews {
+  source: NewsletterSource | null;
+  category: NewsletterCategory | null;
+}
+
+export interface ProcessingQueueItem {
+  id: string;
+  email_id: string;
+  email_subject: string | null;
+  email_from: string | null;
+  email_received_at: string | null;
+  status: QueueStatus;
+  retry_count: number;
+  max_retries: number;
+  error_message: string | null;
+  items_count: number;
+  items_processed: number;
+  created_at: string;
+  processed_at: string | null;
+}
+
+// Newsletter API types
+export interface NewsletterListParams {
+  limit?: number;
+  offset?: number;
+  category?: string;
+  source?: string;
+  featured?: boolean;
+}
+
+export interface NewsletterListResponse {
+  data: NewsletterNewsWithRelations[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+export interface ParsedNewsItem {
+  title: string;
+  summary: string;
+  link: string;
+  thumbnail: string | null;
+}
+
+export interface TranslationResult {
+  title_vi: string;
+  summary_vi: string;
+}
+
+export interface ProcessedNewsItem extends ParsedNewsItem {
+  title_vi: string;
+  summary_vi: string;
+  category_slug: string;
+  actual_url: string;
+  url_hash: string;
+}
+
+export interface NewsletterCardProps {
+  news: NewsletterNewsWithRelations;
+  className?: string;
+}

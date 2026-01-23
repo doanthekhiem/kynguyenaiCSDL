@@ -34,11 +34,10 @@ function preloadUserMenu() {
 }
 
 const navLinks = [
-  { href: "/category/ai-news", label: "Tin tức AI" },
-  { href: "/category/ai-tools", label: "Công cụ AI" },
-  { href: "/category/ai-tutorial", label: "Hướng dẫn" },
-  { href: "/tools", label: "AI Tools" },
+  { href: "/newsletter", label: "Tin tức AI" },
+  { href: "/tools", label: "Công cụ AI" },
   { href: "/skills", label: "AI Skills" },
+  { href: "/github", label: "GitHub Trending" },
 ];
 
 // localStorage cache theo rule 7.5 - Cache Storage API Calls

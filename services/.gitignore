@@ -41,3 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+refresh_token.txt
+execution_log.txt
+debug_output*.txt
+env_check_result.json
+env_test.txt
+test_result.json
+test-output.txt
