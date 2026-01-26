@@ -49,14 +49,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch unread newsletters from Gmail
+    // Fetch unread newsletters from Gmail (or unprocessed ones)
     const emails = await fetchUnreadNewsletters(10);
 
     if (emails.length === 0) {
+      // Check if there are pending items in queue
+      const { getPendingQueueItems } = await import("@/lib/newsletter");
+      const pendingItems = await getPendingQueueItems(5);
+      
       return NextResponse.json({
         success: true,
         message: "No new newsletters to process",
         processed: 0,
+        pendingInQueue: pendingItems.length,
         duration: Date.now() - startTime,
       });
     }
@@ -69,13 +74,25 @@ export async function POST(request: NextRequest) {
     // Process each email
     for (const email of emails) {
       try {
-        // Add to processing queue
-        await addToProcessingQueue(
-          email.id,
-          email.subject,
-          email.from,
-          email.receivedAt
-        );
+        // Check if email is already in queue or processed
+        const { getQueueItem } = await import("@/lib/newsletter");
+        const existingQueueItem = await getQueueItem(email.id);
+        
+        // Skip if already completed or currently processing
+        if (existingQueueItem && (existingQueueItem.status === "completed" || existingQueueItem.status === "processing")) {
+          console.log(`Skipping email ${email.id} - already ${existingQueueItem.status}`);
+          continue;
+        }
+
+        // Add to processing queue (or update if exists)
+        if (!existingQueueItem) {
+          await addToProcessingQueue(
+            email.id,
+            email.subject,
+            email.from,
+            email.receivedAt
+          );
+        }
 
         // Update status to processing
         await updateQueueStatus(email.id, "processing");

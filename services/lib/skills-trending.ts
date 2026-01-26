@@ -10,7 +10,7 @@ interface CacheEntry {
 }
 
 const cache: Map<string, CacheEntry> = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes (reduced from 5 minutes for fresher data)
 
 /**
  * Fetch Skills.sh Trending
@@ -33,15 +33,17 @@ export async function fetchSkillsTrending(
     // Build URL
     const url = type === "trending" ? "https://skills.sh/trending" : "https://skills.sh/";
 
-    // Fetch HTML
+    // Fetch HTML with cache busting to ensure fresh data
     const response = await fetch(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
+        "Cache-Control": "no-cache",
       },
-      next: { revalidate: 300 }, // ISR: 5 minutes
+      next: { revalidate: 0 }, // Force fresh fetch every time
+      cache: "no-store", // Don't cache the fetch
     });
 
     if (!response.ok) {

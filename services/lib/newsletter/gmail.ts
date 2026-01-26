@@ -52,7 +52,9 @@ export async function fetchUnreadNewsletters(maxResults = 10): Promise<GmailMess
     const gmail = getGmailClient();
 
     // Query for unread emails from newsletter senders
-    const query = `(from:*@beehiiv.com OR from:*@substack.com OR from:*@therundown.ai OR from:*@tldr.tech OR from:*@alphasignal.ai) is:unread`;
+    // Also check for emails without the processed label (in case they were read but not processed)
+    // Include specific subdomains for The Rundown AI (daily.therundown.ai, technews.therundown.ai)
+    const query = `(from:*@beehiiv.com OR from:*@substack.com OR from:*@therundown.ai OR from:news@daily.therundown.ai OR from:crew@technews.therundown.ai OR from:*@tldr.tech OR from:*@alphasignal.ai) (is:unread OR -label:KynguyenAI-Processed)`;
 
     console.log(`Searching emails with query: ${query}`);
 
@@ -167,7 +169,7 @@ export async function addLabel(messageId: string, labelName: string): Promise<vo
           },
         });
         labelId = createRes.data.id;
-      } catch (e) {
+      } catch {
         console.log(`Label ${labelName} might already exist or cannot be created`);
         return;
       }
