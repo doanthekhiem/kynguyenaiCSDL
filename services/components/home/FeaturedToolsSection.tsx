@@ -3,10 +3,16 @@
 
 import Link from "next/link";
 import { ToolCard } from "@/components/tools/ToolCard";
-import { getMockTools } from "@/lib/mockdata";
+import { getTools } from "@/lib/supabase/tools";
+import { Tool } from "@/types";
 
 export async function FeaturedToolsSection() {
-  const { data: featuredTools } = getMockTools({ featured: true, limit: 4 });
+  const { data: featuredTools } = await getTools({ limit: 8, sort: "votes" });
+  
+  // If no tools, return null
+  if (!featuredTools || featuredTools.length === 0) {
+    return null;
+  }
 
   return (
     <section className="mb-12">
@@ -28,7 +34,7 @@ export async function FeaturedToolsSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {featuredTools.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
+          <ToolCard key={tool.id} tool={tool as unknown as Tool} />
         ))}
       </div>
     </section>

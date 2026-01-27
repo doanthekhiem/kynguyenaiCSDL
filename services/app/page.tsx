@@ -9,8 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { FeaturedToolsSection } from "@/components/home/FeaturedToolsSection";
-import { HeroSkeleton, FeaturedToolsSkeleton, NewsletterNewsSkeleton } from "@/components/home/Skeletons";
-import { NewsletterNewsSection } from "@/components/newsletter/NewsletterNewsSection";
+import { HeroSkeleton, FeaturedToolsSkeleton } from "@/components/home/Skeletons";
 import { Analytics } from "@vercel/analytics/next";
 
 export default function Home() {
@@ -24,11 +23,6 @@ export default function Home() {
         {/* Hero Section with Suspense */}
         <Suspense fallback={<HeroSkeleton />}>
           <HeroSection />
-        </Suspense>
-
-        {/* Newsletter News Section - AI News from newsletters */}
-        <Suspense fallback={<NewsletterNewsSkeleton />}>
-          <NewsletterNewsSection />
         </Suspense>
 
         {/* Newsletter Signup Section - Static, no Suspense needed */}

@@ -4,18 +4,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BentoGrid, HeroTile, StandardTile, GitHubTile, SkillsTile } from "@/components/bento/BentoGrid";
-import { getMockArticles, getMockFeaturedArticle } from "@/lib/mockdata";
+import { getFeaturedNewsletterNews, getLatestNewsletterNews } from "@/lib/newsletter";
 import { fetchGitHubTrending } from "@/lib/github-trending";
 import { fetchSkillsTrending } from "@/lib/skills-trending";
-import { formatRelativeTime, getCategoryColor } from "@/lib/utils";
+import { formatRelativeTime, getNewsletterCategoryColor } from "@/lib/utils";
 
 export async function HeroSection() {
-  // Fetch data for hero section
-  const featuredArticle = getMockFeaturedArticle();
-  const { data: articles } = getMockArticles({ limit: 15 });
-  const regularArticles = articles.filter((a) => !a.is_featured);
-  const githubRepos = await fetchGitHubTrending(5);
-  const trendingSkills = await fetchSkillsTrending(5);
+  // Fetch data for hero section from newsletter
+  const [featuredNews, latestNews, githubRepos, trendingSkills] = await Promise.all([
+    getFeaturedNewsletterNews(1), // Get 1 featured news
+    getLatestNewsletterNews(15), // Get 15 latest news
+    fetchGitHubTrending(5),
+    fetchSkillsTrending(5),
+  ]);
+
+  // Get featured article (prefer featured, fallback to latest)
+  const featuredArticle = featuredNews.length > 0 ? featuredNews[0] : (latestNews.length > 0 ? latestNews[0] : null);
+  
+  // Get regular articles (exclude featured, limit to 8)
+  const regularArticles = latestNews.filter((n) => n.id !== featuredArticle?.id).slice(0, 8);
+  
+  // If no data, return early
+  if (!featuredArticle && regularArticles.length === 0) {
+    return null;
+  }
 
   return (
     <section className="mb-12">
@@ -27,7 +39,7 @@ export async function HeroSection() {
           <p className="text-muted-foreground text-lg">Cập nhật hàng ngày từ các nguồn tin AI uy tín nhất thế giới</p>
         </div>
         <Link
-          href="/category/ai-news"
+          href="/newsletter"
           className="hidden md:inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
           Xem tất cả
@@ -39,10 +51,12 @@ export async function HeroSection() {
         {/* Hero Article (2x2) */}
         {featuredArticle && (
           <HeroTile>
-            <Link href={featuredArticle.original_url} target="_blank" className="flex flex-col h-full">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white mb-3 w-fit">
-                {featuredArticle.category}
-              </span>
+            <Link href={featuredArticle.original_url} target="_blank" rel="noopener noreferrer" className="flex flex-col h-full">
+              {featuredArticle.category && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white mb-3 w-fit">
+                  {featuredArticle.category.name_vi}
+                </span>
+              )}
               <h2 className="font-bold text-xl md:text-2xl lg:text-3xl leading-tight mb-3 line-clamp-3">
                 {featuredArticle.title_vi}
               </h2>
@@ -50,7 +64,7 @@ export async function HeroSection() {
               <div className="mt-auto pt-4 text-sm opacity-80 flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-white/60" />
-                  {featuredArticle.source}
+                  {featuredArticle.source?.name || "Newsletter"}
                 </span>
                 <span>{formatRelativeTime(featuredArticle.published_at)}</span>
               </div>
@@ -134,9 +148,9 @@ export async function HeroSection() {
         </SkillsTile>
 
         {/* Regular Articles */}
-        {regularArticles.slice(0, 8).map((article) => (
+        {regularArticles.map((article) => (
           <StandardTile key={article.id}>
-            <ArticleTileContent article={article} showImage={false} />
+            <NewsletterTileContent news={article} showImage={false} />
           </StandardTile>
         ))}
       </BentoGrid>
@@ -144,21 +158,21 @@ export async function HeroSection() {
   );
 }
 
-// Article Tile Content Component
-function ArticleTileContent({
-  article,
+// Newsletter Tile Content Component
+function NewsletterTileContent({
+  news,
   showImage = true,
 }: {
-  article: (typeof import("@/lib/mockdata"))["mockArticles"][number];
+  news: import("@/types").NewsletterNewsWithRelations;
   showImage?: boolean;
 }) {
   return (
-    <Link href={article.original_url} target="_blank" className="flex flex-col h-full group">
-      {showImage && article.thumbnail && (
+    <Link href={news.original_url} target="_blank" rel="noopener noreferrer" className="flex flex-col h-full group">
+      {showImage && news.thumbnail_url && (
         <div className="relative h-20 -mx-4 -mt-4 mb-3 overflow-hidden rounded-t-xl">
           <Image
-            src={article.thumbnail}
-            alt={article.title_vi}
+            src={news.thumbnail_url}
+            alt={news.title_vi}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -166,18 +180,20 @@ function ArticleTileContent({
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
       )}
-      <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mb-2 w-fit ${getCategoryColor(article.category)}`}
-      >
-        {article.category}
-      </span>
+      {news.category && (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mb-2 w-fit ${getNewsletterCategoryColor(news.category.slug)}`}
+        >
+          {news.category.name_vi}
+        </span>
+      )}
       <h3 className="font-semibold text-sm leading-tight mb-2 line-clamp-2 text-foreground group-hover:text-primary transition-colors">
-        {article.title_vi}
+        {news.title_vi}
       </h3>
-      <p className="text-xs text-muted-foreground line-clamp-2 flex-grow">{article.summary_vi}</p>
+      <p className="text-xs text-muted-foreground line-clamp-2 flex-grow">{news.summary_vi}</p>
       <div className="mt-auto pt-2 text-xs text-muted-foreground flex justify-between">
-        <span>{article.source}</span>
-        <span>{formatRelativeTime(article.published_at)}</span>
+        <span>{news.source?.name || "Newsletter"}</span>
+        <span>{formatRelativeTime(news.published_at)}</span>
       </div>
     </Link>
   );
