@@ -74,18 +74,21 @@ export async function POST(request: NextRequest) {
     // Process each email
     for (const email of emails) {
       try {
+        console.log(`[Sync] Processing email: ${email.subject} (${email.id})`);
+        
         // Check if email is already in queue or processed
         const { getQueueItem } = await import("@/lib/newsletter");
         const existingQueueItem = await getQueueItem(email.id);
         
         // Skip if already completed or currently processing
         if (existingQueueItem && (existingQueueItem.status === "completed" || existingQueueItem.status === "processing")) {
-          console.log(`Skipping email ${email.id} - already ${existingQueueItem.status}`);
+          console.log(`[Sync] Skipping email ${email.id} - already ${existingQueueItem.status}`);
           continue;
         }
 
         // Add to processing queue (or update if exists)
         if (!existingQueueItem) {
+          console.log(`[Sync] Adding email to queue: ${email.id}`);
           await addToProcessingQueue(
             email.id,
             email.subject,
@@ -96,14 +99,23 @@ export async function POST(request: NextRequest) {
 
         // Update status to processing
         await updateQueueStatus(email.id, "processing");
+        console.log(`[Sync] Status updated to processing: ${email.id}`);
 
         // Match source
         const source = await matchSourceByEmail(email.from);
+        if (source) {
+          console.log(`[Sync] Source matched: ${source.name} (${source.slug})`);
+        } else {
+          console.log(`[Sync] No source matched for: ${email.from}`);
+        }
 
         // Parse email HTML
+        console.log(`[Sync] Parsing email HTML (length: ${email.htmlBody.length} chars)...`);
         const parsedItems = parseNewsletterEmail(email.htmlBody);
+        console.log(`[Sync] Found ${parsedItems.length} news items`);
 
         if (parsedItems.length === 0) {
+          console.log(`[Sync] No news items found - marking as skipped: ${email.id}`);
           await updateQueueStatus(email.id, "skipped", {
             error_message: "No news items found in email",
           });
@@ -111,10 +123,21 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Log sample items
+        if (parsedItems.length > 0) {
+          console.log(`[Sync] Sample items (first 3):`);
+          parsedItems.slice(0, 3).forEach((item, idx) => {
+            console.log(`[Sync]   ${idx + 1}. ${item.title.substring(0, 60)}...`);
+          });
+        }
+
         // Process items (translate & categorize)
+        console.log(`[Sync] Processing ${parsedItems.length} items (translate & categorize)...`);
         const processedItems = await processNewsItems(parsedItems, 500); // 500ms delay between API calls
+        console.log(`[Sync] Processed ${processedItems.length} items`);
 
         // Batch create in database
+        console.log(`[Sync] Saving to database...`);
         const { created, skipped } = await batchCreateNewsletterNews(
           processedItems,
           {
@@ -124,6 +147,7 @@ export async function POST(request: NextRequest) {
             source_id: source?.id || null,
           }
         );
+        console.log(`[Sync] Database result: ${created} created, ${skipped} skipped`);
 
         totalCreated += created;
         totalSkipped += skipped;
@@ -133,14 +157,24 @@ export async function POST(request: NextRequest) {
           items_count: parsedItems.length,
           items_processed: created,
         });
+        console.log(`[Sync] Queue status updated to completed: ${email.id}`);
 
         // Mark email as read and add label
         await markAsProcessed(email.id);
         await addLabel(email.id, "KynguyenAI-Processed");
+        console.log(`[Sync] Email marked as processed: ${email.id}`);
 
         processedEmails.push(email.subject);
+        console.log(`[Sync] ✓ Successfully processed: ${email.subject}`);
       } catch (emailError) {
-        console.error(`Error processing email ${email.id}:`, emailError);
+        console.error(`[Sync] ✗ ERROR processing email ${email.id}:`, emailError);
+        console.error(`[Sync] Error details:`, {
+          subject: email.subject,
+          from: email.from,
+          error: emailError instanceof Error ? emailError.message : "Unknown error",
+          stack: emailError instanceof Error ? emailError.stack : undefined,
+        });
+        
         errors.push(
           `${email.subject}: ${emailError instanceof Error ? emailError.message : "Unknown error"}`
         );

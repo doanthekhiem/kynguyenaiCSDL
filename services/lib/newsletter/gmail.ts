@@ -54,7 +54,8 @@ export async function fetchUnreadNewsletters(maxResults = 10): Promise<GmailMess
     // Query for unread emails from newsletter senders
     // Also check for emails without the processed label (in case they were read but not processed)
     // Include specific subdomains for The Rundown AI (daily.therundown.ai, technews.therundown.ai)
-    const query = `(from:*@beehiiv.com OR from:*@substack.com OR from:*@therundown.ai OR from:news@daily.therundown.ai OR from:crew@technews.therundown.ai OR from:*@tldr.tech OR from:*@alphasignal.ai) (is:unread OR -label:KynguyenAI-Processed)`;
+    // Exclude substack.com emails
+    const query = `(from:*@beehiiv.com OR from:*@therundown.ai OR from:news@daily.therundown.ai OR from:crew@technews.therundown.ai OR from:*@tldr.tech OR from:*@alphasignal.ai) -from:*@substack.com (is:unread OR -label:KynguyenAI-Processed)`;
 
     console.log(`Searching emails with query: ${query}`);
 
