@@ -6,6 +6,28 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import type { ProcessingQueueItem, NewsletterNewsWithRelations } from "@/types";
+
+interface TestSyncEmail {
+  id: string;
+  subject: string;
+  from: string;
+  receivedAt: string;
+}
+
+interface TestSyncResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  emailsFound?: number;
+  processed?: number;
+  created?: number;
+  skipped?: number;
+  emails?: TestSyncEmail[] | string[];
+  errors?: string[];
+  logs?: string[];
+  duration?: number;
+}
 
 interface DebugInfo {
   config: {
@@ -23,9 +45,9 @@ interface DebugInfo {
     sources: number;
   };
   recent: {
-    queue: any[];
-    news: any[];
-    pendingItems: any[];
+    queue: ProcessingQueueItem[];
+    news: NewsletterNewsWithRelations[];
+    pendingItems: ProcessingQueueItem[];
   };
   timestamp: string;
 }
@@ -34,7 +56,7 @@ export default function NewsletterDebugPage() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [testSyncLoading, setTestSyncLoading] = useState(false);
-  const [testSyncResult, setTestSyncResult] = useState<any>(null);
+  const [testSyncResult, setTestSyncResult] = useState<TestSyncResult | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
   const fetchDebugInfo = async () => {
@@ -267,14 +289,23 @@ export default function NewsletterDebugPage() {
               <div className="mt-4">
                 <h3 className="font-medium text-foreground mb-2">Emails Found:</h3>
                 <div className="space-y-2">
-                  {testSyncResult.emails.map((email: any, index: number) => (
-                    <div key={index} className="bg-surface-hover p-3 rounded-lg text-sm">
-                      <div className="font-medium text-foreground">{email.subject}</div>
-                      <div className="text-muted-foreground text-xs mt-1">
-                        From: {email.from} | {new Date(email.receivedAt).toLocaleString("vi-VN")}
+                  {testSyncResult.emails.map((email: TestSyncEmail | string, index: number) => {
+                    if (typeof email === "string") {
+                      return (
+                        <div key={index} className="bg-surface-hover p-3 rounded-lg text-sm">
+                          <div className="font-medium text-foreground">{email}</div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={index} className="bg-surface-hover p-3 rounded-lg text-sm">
+                        <div className="font-medium text-foreground">{email.subject}</div>
+                        <div className="text-muted-foreground text-xs mt-1">
+                          From: {email.from} | {new Date(email.receivedAt).toLocaleString("vi-VN")}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
