@@ -16,6 +16,7 @@ import {
   addToProcessingQueue,
   updateQueueStatus,
   batchCreateNewsletterNews,
+  getQueueItem,
 } from "@/lib/newsletter";
 
 export const maxDuration = 60; // Allow up to 60 seconds for processing
@@ -77,7 +78,6 @@ export async function POST(request: NextRequest) {
         console.log(`[Sync] Processing email: ${email.subject} (${email.id})`);
         
         // Check if email is already in queue or processed
-        const { getQueueItem } = await import("@/lib/newsletter");
         const existingQueueItem = await getQueueItem(email.id);
         
         // Skip if already completed or currently processing
