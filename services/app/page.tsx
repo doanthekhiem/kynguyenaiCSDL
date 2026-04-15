@@ -1,40 +1,17 @@
-// Home Page - KynguyenAI v3.0
-// ISR: Revalidate every 5 minutes
-// Rule 1.5 - Strategic Suspense Boundaries
-export const revalidate = 300;
-
-import { Suspense } from "react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { HeroSection } from "@/components/home/HeroSection";
-import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { FeaturedToolsSection } from "@/components/home/FeaturedToolsSection";
-import { HeroSkeleton, FeaturedToolsSkeleton } from "@/components/home/Skeletons";
-import { Analytics } from "@vercel/analytics/next";
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Analytics />
-      <Header />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-6 py-16 text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-20">
+        <Image src="/file.svg" alt="" fill priority className="object-cover" />
+      </div>
 
-      {/* Main Content - Rule 1.5: Suspense boundaries for faster initial paint */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section with Suspense */}
-        <Suspense fallback={<HeroSkeleton />}>
-          <HeroSection />
-        </Suspense>
-
-        {/* Newsletter Signup Section - Static, no Suspense needed */}
-        <NewsletterSection />
-
-        {/* Featured Tools with Suspense */}
-        <Suspense fallback={<FeaturedToolsSkeleton />}>
-          <FeaturedToolsSection />
-        </Suspense>
-      </main>
-
-      <Footer />
-    </div>
+      <section className="relative z-10 w-full max-w-2xl rounded-2xl border border-white/20 bg-white/10 p-10 text-center backdrop-blur-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">Domain for sale</p>
+        <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">domain for sale</h1>
+        <p className="mt-6 text-base text-slate-200 sm:text-lg">contact 0986618442</p>
+      </section>
+    </main>
   );
 }
